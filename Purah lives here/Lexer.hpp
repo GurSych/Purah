@@ -6,32 +6,13 @@
 #include <regex>
 #include <map>
 
+#include "Exceptions.hpp"
+
 #ifdef EOF
     #undef EOF
 #endif
 
-enum TokenType {
-    EOF = -1, IDENTIFIER,
-    NUMBER, STRING, FLOAT, BOOl,
-    DOT, COMMA, SEMICOLON,
-    PLUS, MINUS, EQUALS, LPAREN, RPAREN,
-    STAR, DIVIDE, FLOOR_DIVIDE, PERCENT,
-    IF, ELSE, FUNCTION, RETURN,
-    LFIGPAREN, RFIGPAREN, ARROW,
-    INCRIMENT, DECRIMENT,
-    NOT, AND, OR, TRUE, FALSE,
-    EQUALITY, NO_EQALITY, MORE, MORE_OR_EQALITY, LESS, LESS_OR_EQALITY,
-    WHILE, FOR,
-    PRINT
-};
-
-struct Token {
-    Token(TokenType _t, std::string _v, size_t _l) : 
-        type{_t}, value{_v}, line{_l} {}
-    TokenType type{};
-    std::string value{};
-    size_t line{};
-};
+#include "Tokens.hpp"
 
 class Lexer {
 public:
@@ -50,7 +31,7 @@ public:
                     isfloat = true; num += "."; ++pos;
                     while(isdigit(input[pos]) && pos < input_size) num += input[pos++];
                     if(pos < input_size) if(input[pos] == '.')
-                        throw std::runtime_error("Unexpected dot at line " + std::to_string(line));
+                        throw LexerError(std::string{"Unexpected dot at line "} + std::to_string(line));
                 }
                 tokens.emplace_back((isfloat ? FLOAT : NUMBER),num,line); --pos;
             }
@@ -70,7 +51,7 @@ public:
                 while(input[pos] != '"' && pos < input_size) 
                     str += input[pos++];
                 if(pos >= input_size) 
-                    throw std::runtime_error("Unclosed string at line " + std::to_string(line));
+                    throw LexerError("Unclosed string at line " + std::to_string(line));
                 tokens.emplace_back(STRING,str,line);
             }
             else if(c == '(') tokens.emplace_back(LPAREN,"(",line);
@@ -124,16 +105,15 @@ public:
             }
             else if(c == '{') tokens.emplace_back(LFIGPAREN,"{",line);
             else if(c == '}') tokens.emplace_back(RFIGPAREN,"}",line);
-            else throw std::runtime_error("Unexpected input at line " + std::to_string(line));
+            else throw LexerError("Unexpected input at line " + std::to_string(line));
             ++pos;
         }
         tokens.emplace_back(EOF,"",line);
         return tokens;
     }
-private:
-    const std::map<std::string,TokenType> system_words{
+    static const inline std::map<std::string,TokenType> system_words{
         {"func",FUNCTION},{"return",RETURN},
-        {"if",IF},{"else",ELSE},//{"true",TRUE},{"false",FALSE},
+        {"if",IF},{"else",ELSE},
         {"not",NOT},{"and",AND},{"or",OR},
         {"while",WHILE},{"for",FOR},
         {"print",PRINT}
