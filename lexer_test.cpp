@@ -1,16 +1,18 @@
 #include <iostream>
 #include "Purah.hpp"
 
-void print(std::vector<Token> vec) {
+using namespace purah;
+
+void print(std::vector<tkn::Token> vec) {
     std::cout << vec[0].line << ": ";
     unsigned int i{};
-    for(Token& token : vec)
+    for(tkn::Token& token : vec)
         std::cout << (i++ ? ", <" : "<") << token.type << " '" << token.value << "'>";
     std::cout << std::endl;
 }
 
 int main() {
-    Lexer lexer{};
+    lxr::Lexer lexer{};
     std::string str{};
     unsigned int line{};
     while(str != "quit") {

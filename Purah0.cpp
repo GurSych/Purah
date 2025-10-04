@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
             << argv[1] << "' file" << std::endl;
         return 1;
     }
-    Purah purah{};
+    purah::Purah purah{};
     std::string input{};
     while(std::getline(file,input)) {
         std::cout << input << std::endl;
