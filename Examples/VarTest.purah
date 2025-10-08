@@ -1,0 +1,3 @@
+var world\string = "world"
+COUT "Hello "
+COUT world

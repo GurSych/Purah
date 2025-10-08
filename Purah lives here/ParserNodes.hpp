@@ -15,10 +15,12 @@ namespace purah { namespace nds {
     enum ASTNodeType {
         SimpleAST, 
         NewVarNodeType,
-        IdentifierExprType, 
+        IdentifierExprType,
+        ClassObjectExprType,
         IntExprType, FloatExprType,
         BoolExprType, StringExprType,
-        BinaryExprType, CallExprType, 
+        BinaryExprType,
+        CallExprType, ReturnExprType,
         COUTExprType, PrintExprType
     };
 
@@ -33,10 +35,10 @@ namespace purah { namespace nds {
         public:
         ASTNodeType nodeType() override { return NewVarNodeType; }
             NewVarNode(const std::string& _t, const std::string& _n, ASTPtr _v) 
-                : varType{_t}, name{_n}, value{std::move(_v)} {}
-            std::string varType{};
+                : type{_t}, name{_n}, value{std::move(_v)} {}
+            std::string type{};
             std::string name{};
-            ASTPtr value{};
+            ASTPtr      value{};
     };
 
     class IntExprNode: public ASTNode {
@@ -74,6 +76,13 @@ namespace purah { namespace nds {
             std::string name{};
     };
 
+    class ClassObjectExprNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return ClassObjectExprType; }
+            ClassObjectExprNode() { }
+            /// Boo!~ ///
+    };
+
     class BinaryExprNode: public ASTNode {
         public:
         ASTNodeType nodeType() override { return BinaryExprType; }
@@ -89,8 +98,15 @@ namespace purah { namespace nds {
         ASTNodeType nodeType() override { return CallExprType; }
             CallExprNode(const std::string& _n, std::vector<ASTPtr>&& _a_s)
                 : name{_n}, args{std::move(_a_s)} {}
-            std::string name{};
+            std::string         name{};
             std::vector<ASTPtr> args{};
+    };
+
+    class ReturnExprNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return ReturnExprType; }
+            ReturnExprNode(ASTPtr _v) : value{std::move(_v)} { }
+            ASTPtr value{};
     };
 
     class COUTExprNode: public ASTNode {

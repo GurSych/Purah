@@ -4,13 +4,21 @@
 
 namespace purah { namespace excptn {
 
+    class PurahError: public std::exception {
+        public:
+            PurahError(const char* _msg) { message += _msg; }
+            PurahError(const std::string& _msg) { message += _msg; }
+            const char* what() const throw() { return message.c_str(); }
+        private:
+            std::string message{"|| Purah error: "};
+    };
     class LexerError: public std::exception {
         public:
             LexerError(const char* _msg) { message += _msg; }
             LexerError(const std::string& _msg) { message += _msg; }
             const char* what() const throw() { return message.c_str(); }
         private:
-            std::string message{"|| Lexer error! "};
+            std::string message{"|| Lexer error: "};
     };
     class ParserError: public std::exception {
         public:
@@ -18,7 +26,7 @@ namespace purah { namespace excptn {
             ParserError(const std::string& _msg) { message += _msg; }
             const char* what() const throw() { return message.c_str(); }
         private:
-            std::string message{"|| Parser error! "};
+            std::string message{"|| Parser error: "};
     };
     class MemoryError: public std::exception {
         public:
@@ -26,7 +34,7 @@ namespace purah { namespace excptn {
             MemoryError(const std::string& _msg) { message += _msg; }
             const char* what() const throw() { return message.c_str(); }
         private:
-            std::string message{"|| Memory error! "};
+            std::string message{"|| Memory error: "};
     };
 
 } }

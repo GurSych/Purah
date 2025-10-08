@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <vector>
 #include <memory>
-#include <iostream>
 
 #ifdef EOF
     #undef EOF
@@ -26,7 +25,7 @@ namespace purah { namespace prsr {
         std::vector<nds::ASTPtr> operator()() {
             std::vector<nds::ASTPtr> AST_vector{};
             while (available()) {
-                if(token_iter->type == tkn::EOF) {
+                if(token_iter->type == tkn::EOF || token_iter->type == tkn::EOL) {
                     go_next_token();
                     continue;
                 }
@@ -52,6 +51,9 @@ namespace purah { namespace prsr {
                 case tkn::VAR:
                     node = parse_var_statement();
                     break;
+                case tkn::COUT:
+                    node = parse_COUT_statement();
+                    break;
                 default:
                     node = parse_expression_statement();
                     break;
@@ -64,7 +66,7 @@ namespace purah { namespace prsr {
             {tkn::STAR,30},{tkn::SLASH,30},{tkn::DBL_SLASH,30},{tkn::PERCENT,30}
         };
     private:
-        std::vector<tkn::Token> tokens{};
+        std::vector<tkn::Token>& tokens;
         std::vector<tkn::Token>::const_iterator token_iter;
         std::vector<tkn::Token>::const_iterator token_end;
         void check_nds_type(tkn::TokenType type1, tkn::TokenType type2, std::string error) {
@@ -160,6 +162,19 @@ namespace purah { namespace prsr {
             go_next_token();
             nds::ASTPtr var_value = parse_expression_statement();
             return std::make_unique<nds::NewVarNode>(var_type, var_name, std::move(var_value));
+        }
+        nds::ASTPtr parse_if_statement() {
+            go_check_type(tkn::L_BRACKET, "Loosing bool if-condition at line: " + std::to_string(token_iter->line));
+            nds::ASTPtr condition = parse_expression_statement();
+            if(token_iter->type != tkn::R_BRACKET)
+                throw excptn::ParserError("Loosing closing bracket at line: " + std::to_string(token_iter->line));
+            std::vector<nds::ASTPtr> body;
+            // Boo!~ //
+        }
+        nds::ASTPtr parse_COUT_statement() {
+            go_next_token();
+            nds::ASTPtr value = parse_expression_statement();
+            return std::make_unique<nds::COUTExprNode>(std::move(value));
         }
     };
 

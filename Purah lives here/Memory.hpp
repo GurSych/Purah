@@ -1,6 +1,8 @@
 #pragma once
+#include <stdint.h>
 #include <variant>
 #include <string>
+#include <queue>
 #include <map>
 
 #ifdef EOF
@@ -15,43 +17,61 @@ using namespace purah;
 
 namespace purah { namespace mmry {
 
-    using TypeVariant = std::variant<long long int,double,std::string,bool>;
+    using TypeVariant = std::variant<int64_t,double,std::string,bool>;
     using MemoryCellPair = std::pair<tkn::TokenType,TypeVariant>;
-
-    class Variable {
-        public:
-            Variable() {}
-            Variable(tkn::TokenType _t, TypeVariant _v) : type{_t}, value{_v} {}
-            tkn::TokenType type{};
-            TypeVariant value{};
-    };
-
-    class VariableStorage {
-        public:
-            VariableStorage() {}
-            void set_var(const std::string& name, Variable value) {
-                variables[name] = value;
-            }
-            Variable get_var(const std::string& name) {
-                if(variables.count(name)) return variables[name];
-                throw excptn::MemoryError(std::string{"Undefined variable name: "}+name);
-            }
-        private:
-            std::map<std::string,Variable> variables{};
-    };
 
     class GlobalValueStorage {
         public:
             GlobalValueStorage() {}
-            size_t new_cell() {
-                return 0ull;
+            template<typename T>
+            uint64_t new_cell(tkn::TokenType type, T value) {
+                uint64_t address{};
+                if(!free_addresses.empty()) {
+                    address = free_addresses.top();
+                    free_addresses.pop();
+                } else {
+                    address = max_address++;
+                }
+                memory[address] = MemoryCellPair{type,value};
+                return address;
             }
-            const MemoryCellPair& get_cell(const size_t address) {
+            MemoryCellPair& get_cell(const uint64_t address) {
                 if(memory.count(address)) return memory[address];
-                    throw excptn::MemoryError(std::string{"Undefined memory address: "}+std::to_string(address));
+                throw excptn::MemoryError(std::string{"Undefined memory address: "}+std::to_string(address));
             }
         private:
-            std::map<size_t,MemoryCellPair> memory{};
+            std::map<uint64_t,MemoryCellPair> memory{};
+            std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> free_addresses{};
+            uint64_t max_address{};
+    };
+
+    class VariableStorage {
+        public:
+            VariableStorage(GlobalValueStorage& global_storage) : global_storage(global_storage) {}
+            template<typename T>
+            uint64_t new_var(const std::string& name, tkn::TokenType type, T value) {
+                if(variables.count(name)) 
+                    throw excptn::MemoryError(std::string{"Redefinition of variable name: "}+name);
+                uint64_t address = global_storage.new_cell(type, value);
+                variables[name] = address;
+                return address;
+            }
+            template<typename T>
+            MemoryCellPair& set_var(const std::string& name, T value) {
+                if(!variables.count(name))
+                    throw excptn::MemoryError(std::string{"Undefined variable name: "}+name);
+                uint64_t address = variables[name];
+                MemoryCellPair& cell = global_storage.get_cell(address);
+                cell.second = value;
+                return cell;
+            }
+            MemoryCellPair& get_var(const std::string& name) {
+                if(variables.count(name)) return global_storage.get_cell(variables[name]);
+                throw excptn::MemoryError(std::string{"Undefined variable name: "}+name);
+            }
+        private:
+            GlobalValueStorage& global_storage;
+            std::map<std::string,uint64_t> variables{};
     };
 
 } }

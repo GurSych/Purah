@@ -22,7 +22,8 @@ const std::map<nds::ASTNodeType, std::string> keywords{
     {nds::BoolExprType,"BoolExprType"},
     {nds::StringExprType,"StringExprType"},
     {nds::BinaryExprType,"BinaryExprType"},
-    {nds::CallExprType,"CallExprType"}
+    {nds::CallExprType,"CallExprType"},
+    {nds::COUTExprType,"COUTExprType"}
 };
 
 int main() {

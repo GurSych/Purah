@@ -9,7 +9,7 @@
 namespace purah { namespace tkn {
 
     enum TokenType {
-        EOF = -1, EMPTY,
+        EOF = -2, EOL = -1, EMPTY,
         IDENTIFIER,
         INTEGER, STRING, FLOAT, BOOL,
         SLASH, DBL_SLASH,                          /*   / //                */  

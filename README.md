@@ -12,7 +12,7 @@ Purah0 will be the first version of interpreter. It will have a few standard typ
 
 - [X] Lexer
 - [ ] Parser
-  - [ ] Variables parsing
+  - [X] Variables parsing
   - [ ] Functions parsing
   - [ ] If-else statements parsing
 - [ ] Interpreter
