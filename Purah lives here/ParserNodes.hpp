@@ -15,6 +15,7 @@ namespace purah { namespace nds {
     enum ASTNodeType {
         SimpleAST, 
         NewVarNodeType,
+        FunctionExprType,
         IdentifierExprType,
         ClassObjectExprType,
         IntExprType, FloatExprType,
@@ -39,6 +40,28 @@ namespace purah { namespace nds {
             std::string type{};
             std::string name{};
             ASTPtr      value{};
+    };
+
+    class FunctionExprNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return FunctionExprType; }
+            FunctionExprNode(const std::string& _n, const std::string& _t, 
+                std::vector<nds::ASTPtr>&& _args, std::vector<nds::ASTPtr>&& _body) 
+                : name{_n}, type{_t}, args{std::move(_args)}, body{std::move(_body)} {
+
+            }
+            std::string name{};
+            std::string type{};
+            std::vector<nds::ASTPtr> args{};
+            std::vector<nds::ASTPtr> body{};
+    };
+
+    class TypedIdentifierExprNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return IdentifierExprType; }
+            TypedIdentifierExprNode(std::string _n, std::string _t) : name{_n}, type{_t} {}
+            std::string name{};
+            std::string type{};
     };
 
     class IntExprNode: public ASTNode {

@@ -37,9 +37,11 @@ int main() {
     }
     std::vector<tkn::Token> tokens = lxr::Lexer{}(input);
     print(tokens);
-    std::vector<nds::ASTPtr>&& ast = prsr::Parser{tokens}();
-    std::cout << "Parsed " << ast.size() << " nodes." << std::endl;
-    for(unsigned int i{}; i < ast.size(); ++i)
-        std::cout << i <<". Node type: " << keywords.at(ast.at(i)->nodeType()) << std::endl;
+    prsr::Parser parser{tokens};
+    parser();
+    std::vector<nds::ASTPtr>&& ast = std::move(parser.func_vector);
+    std::cout << "Parsed " << ast.size() << " functions." << std::endl;
+    //for(unsigned int i{}; i < ast.size(); ++i)
+    //    std::cout << i <<". Node type: " << keywords.at(ast.at(i)->nodeType()) << std::endl;
     return 0;
 }

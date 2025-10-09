@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <vector>
 #include <memory>
+#include <tuple>
 
 #ifdef EOF
     #undef EOF
@@ -22,11 +23,14 @@ namespace purah { namespace prsr {
             token_iter = tokens.cbegin();
             token_end = tokens.cend();
         }
-        std::vector<nds::ASTPtr> operator()() {
-            std::vector<nds::ASTPtr> AST_vector{};
+        void operator()() {
             while (available()) {
                 if(token_iter->type == tkn::EOF || token_iter->type == tkn::EOL) {
                     go_next_token();
+                    continue;
+                }
+                if(token_iter->type == tkn::FUNCTION) {
+                    func_vector.push_back(std::move(parse_func_statement()));
                     continue;
                 }
                 nds::ASTPtr node = parse_statement();
@@ -35,7 +39,6 @@ namespace purah { namespace prsr {
                 if(node->nodeType() != nds::SimpleAST)
                     AST_vector.push_back(std::move(node));
             }
-            return std::move(AST_vector);
         }
         bool available() {
             return (token_iter < token_end);
@@ -45,6 +48,9 @@ namespace purah { namespace prsr {
                 return std::move(nds::ASTPtr{new nds::ASTNode{}});
             nds::ASTPtr node{};
             switch(token_iter->type) {
+                case tkn::FUNCTION:
+                    node = parse_func_statement();
+                    break;
                 case tkn::IDENTIFIER:
                     node = parse_identifier_statement();
                     break;
@@ -65,6 +71,8 @@ namespace purah { namespace prsr {
             {tkn::PLUS,20},{tkn::MINUS,20},
             {tkn::STAR,30},{tkn::SLASH,30},{tkn::DBL_SLASH,30},{tkn::PERCENT,30}
         };
+        std::vector<nds::ASTPtr> AST_vector{};
+        std::vector<nds::ASTPtr> func_vector{};
     private:
         std::vector<tkn::Token>& tokens;
         std::vector<tkn::Token>::const_iterator token_iter;
@@ -162,6 +170,40 @@ namespace purah { namespace prsr {
             go_next_token();
             nds::ASTPtr var_value = parse_expression_statement();
             return std::make_unique<nds::NewVarNode>(var_type, var_name, std::move(var_value));
+        }
+        nds::ASTPtr parse_func_statement() {
+            go_check_type(tkn::IDENTIFIER,  "Loosing new function name at line: " + std::to_string(token_iter->line));
+            std::string func_name = token_iter->value;
+            go_check_type(tkn::BACKSLASH,  "Loosing new function returning type at line: " + std::to_string(token_iter->line));
+            go_check_type(tkn::IDENTIFIER, "Loosing new function returning type at line: " + std::to_string(token_iter->line));
+            std::string returning_type = token_iter->value;
+            go_check_type(tkn::L_BRACKET, "Loosing new function argumets at line: " + std::to_string(token_iter->line));
+            std::vector<nds::ASTPtr> func_args{};
+            go_next_token();
+            if(token_iter->type == tkn::IDENTIFIER) {
+                auto parse_arg = [&]() -> nds::ASTPtr {
+                    std::string arg_name = token_iter->value;
+                    go_check_type(tkn::BACKSLASH,  "Loosing argument type at line: " + std::to_string(token_iter->line));
+                    go_check_type(tkn::IDENTIFIER, "Loosing argument type at line: " + std::to_string(token_iter->line));
+                    std::string arg_type = token_iter->value;
+                    return std::make_unique<nds::TypedIdentifierExprNode>(arg_name,arg_type);
+                };
+                func_args.push_back(std::move(parse_arg()));
+                while(token_iter->type != tkn::COMMA) {
+                    go_check_type(tkn::IDENTIFIER, "Loosing argument at line: " + std::to_string(token_iter->line));
+                    func_args.push_back(std::move(parse_arg()));
+                }
+            }
+            if(token_iter->type != tkn::R_BRACKET)
+                throw excptn::ParserError("Loosing closing bracket at line: " + std::to_string(token_iter->line));
+            go_check_type(tkn::L_CRL_BRACKET, "Loosing new function body at line: " + std::to_string(token_iter->line));
+            std::vector<nds::ASTPtr> func_body{};
+            go_next_token();
+            while (token_iter->type != tkn::R_CRL_BRACKET) {
+                func_body.push_back(std::move(parse_statement()));
+            }
+            go_next_token();
+            return std::make_unique<nds::FunctionExprNode>(func_name,returning_type,std::move(func_args),std::move(func_body));
         }
         nds::ASTPtr parse_if_statement() {
             go_check_type(tkn::L_BRACKET, "Loosing bool if-condition at line: " + std::to_string(token_iter->line));
