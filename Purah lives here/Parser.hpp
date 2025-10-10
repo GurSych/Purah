@@ -51,6 +51,9 @@ namespace purah { namespace prsr {
                 case tkn::FUNCTION:
                     node = parse_func_statement();
                     break;
+                case tkn::RETURN:
+                    node = parse_return_statement();
+                    break;
                 case tkn::IDENTIFIER:
                     node = parse_identifier_statement();
                     break;
@@ -204,6 +207,11 @@ namespace purah { namespace prsr {
             }
             go_next_token();
             return std::make_unique<nds::FunctionExprNode>(func_name,returning_type,std::move(func_args),std::move(func_body));
+        }
+        nds::ASTPtr parse_return_statement() {
+            go_next_token();
+            nds::ASTPtr value = parse_expression_statement();
+            return std::make_unique<nds::ReturnExprNode>(std::move(value));
         }
         nds::ASTPtr parse_if_statement() {
             go_check_type(tkn::L_BRACKET, "Loosing bool if-condition at line: " + std::to_string(token_iter->line));

@@ -149,7 +149,7 @@ namespace purah { namespace lxr {
                 else throw excptn::LexerError("Unexpected input at line " + std::to_string(line));
                 ++iter;
             }
-            tokens.emplace_back(tkn::EOF,"",line);
+            //tokens.emplace_back(tkn::EOF,"",line);
             return tokens;
         }
         void tokenize(const std::string& input) {

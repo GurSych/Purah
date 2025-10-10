@@ -5,11 +5,14 @@
 #include <string>
 #include <memory>
 #include <stack>
+#include <map>
 
 #include "Purah lives here/Lexer.hpp"
 #include "Purah lives here/Parser.hpp"
 #include "Purah lives here/Exceptions.hpp"
 #include "Purah lives here/Memory.hpp"
+#include "Purah lives here/Functions.hpp"
+#include "Purah lives here/AdditionalServices.hpp"
 
 using namespace purah;
 
@@ -31,17 +34,24 @@ namespace purah {
             try {
                 parser = std::make_unique<prsr::Parser>(lexer.get_tokens());
                 parser->operator()();
-                functions_vector = std::move(parser->func_vector);
             } catch (const excptn::ParserError& e) {
                 throw e;
             }
-            // Boo!~ //
+            for(auto& func : parser->func_vector) {
+                functions[fnc::FunctionSignature{func}] = std::move(func);
+            }
         }
         int64_t interpret() {
-            if(functions_vector.empty()) return -1;
+            if(functions.empty()) return -1;
             int64_t result{};
             try {
-                // Boo!~ //
+                if(!functions.count(fnc::FunctionSignature{"main","int",std::vector<std::string>{}}))
+                    throw excptn::PurahError("There's no main\\int() function!");
+                calling_stack.push(PurahSpace{
+                    std::move(functions[fnc::FunctionSignature{"main","int",std::vector<std::string>{}}]),
+                    this,false});
+                nds::ASTPtr return_node = calling_stack.top()();
+                result = get_cpp_from_ast<int64_t>(return_node);
             } catch (const excptn::PurahError& e) {
                 throw e;
             } catch (const excptn::MemoryError& e) {
@@ -55,6 +65,14 @@ namespace purah {
             if (type == "bool")    return tkn::BOOL;
             if (type == "string")  return tkn::STRING;
             throw std::invalid_argument("Unknown token type: " + type);
+        }
+        static std::string type_token_to_string(const tkn::TokenType& type) {
+            if(!tkn::is_single_value_type(type))
+                throw std::invalid_argument("Unsupported type for type_token_to_string");
+            if (type == tkn::INTEGER) return "int";
+            if (type == tkn::FLOAT)   return "float";
+            if (type == tkn::BOOL)    return "bool";
+            if (type == tkn::STRING)  return "string";
         }
         template <typename T>
         static T get_cpp_from_ast(nds::ASTPtr& node) {
@@ -86,34 +104,54 @@ namespace purah {
         public:
             PurahSpace(std::vector<nds::ASTPtr>&& ast, Purah* _purah, bool stack_right = true) 
                 : AST_vector{std::move(ast)}, purah{_purah}, has_stack_right{stack_right} {}
-            std::vector<nds::ASTPtr> AST_vector{};
-            mmry::VariableStorage    variable_storage{purah->global_storage};
-            const bool               has_stack_right{};
+            PurahSpace(nds::ASTPtr&& ast, Purah* _purah, bool stack_right = true) 
+                : purah{_purah}, has_stack_right{stack_right} {
+                if(ast->nodeType() != nds::FunctionExprType)
+                    throw excptn::PurahError("InterpreterError: Expected FunctionExpr node for PurahSpace");
+                nds::FunctionExprNode* func_node = static_cast<nds::FunctionExprNode*>(ast.get());
+                AST_vector = std::move(func_node->body);
+            }
             void set_var(nds::ASTPtr new_var_node) {
                 if(new_var_node->nodeType() != nds::NewVarNodeType) 
                     throw excptn::PurahError("InterpreterError: Expected NewVar node at set_var");
                 // Boo!~ //
             }
             nds::ASTPtr operator()() {
-                
+                for(nds::ASTPtr& node : AST_vector) {
+                    nds::ASTPtr interpreted_node;
+                    try {
+                        interpreted_node = interpret_node(node);
+                    } catch (const excptn::PurahError& e) {
+                        throw e;
+                    } catch (const excptn::MemoryError& e) {
+                        throw e;
+                    }
+                    if(interpreted_node->nodeType() == nds::ReturnExprType) {
+                        nds::ReturnExprNode* return_node = static_cast<nds::ReturnExprNode*>(interpreted_node.get());
+                        nds::ASTPtr returned_node = std::move(return_node->value);
+                        // Boo!~ //
+                        return std::move(returned_node);
+                    }
+                }
+                return std::make_unique<nds::ASTNode>();
             }
             nds::ASTPtr interpret_node(nds::ASTPtr&);
+            nds::ASTPtr interpret_return(nds::ASTPtr&);
             nds::ASTPtr interpret_identifier(nds::ASTPtr&);
             nds::ASTPtr interpret_new_var(nds::ASTPtr&);
             nds::ASTPtr interpret_COUT(nds::ASTPtr&);
+            std::vector<nds::ASTPtr> AST_vector{};
+            mmry::VariableStorage    variable_storage{purah->global_storage};
+            const bool               has_stack_right{};
         private:
             Purah* purah{};
         };
-        class FunctionSignature {
-        public:
-            FunctionSignature() { }
-        };
     private:
-        std::vector<nds::ASTPtr>      functions_vector{};
-        std::unique_ptr<prsr::Parser> parser{nullptr};
-        mmry::GlobalValueStorage      global_storage{};
-        std::stack<PurahSpace>        calling_stack{};
-        mmry::VariableStorage         variable_storage{global_storage};
+        std::unordered_map<fnc::FunctionSignature,nds::ASTPtr> functions{};
+        std::unique_ptr<prsr::Parser>                          parser{nullptr};
+        mmry::GlobalValueStorage                               global_storage{};
+        std::stack<PurahSpace>                                 calling_stack{};
+        mmry::VariableStorage                                  variable_storage{global_storage};
     };
 
 }
@@ -130,6 +168,9 @@ nds::ASTPtr Purah::PurahSpace::interpret_node(nds::ASTPtr& node) {
         case nds::StringExprType:
             return_node = std::move(node);
             break;
+        case nds::ReturnExprType:
+            return_node = interpret_return(node);
+            break;
         case nds::NewVarNodeType:
             return_node = interpret_new_var(node);
             break;
@@ -137,12 +178,17 @@ nds::ASTPtr Purah::PurahSpace::interpret_node(nds::ASTPtr& node) {
             return_node = interpret_COUT(node);
             break;
         default:
-            throw excptn::PurahError("|| Purah: I can't handle this node yet");
+            throw excptn::PurahError("I can't handle this node yet");
             break;
     }
     return std::move(return_node);
 }
-
+nds::ASTPtr Purah::PurahSpace::interpret_return(nds::ASTPtr& node) {
+    if(node->nodeType() != nds::ReturnExprType)
+        throw excptn::PurahError("InterpreterError: Expected ReturnExpr node at interpret_identifier");
+    nds::ReturnExprNode* return_node = static_cast<nds::ReturnExprNode*>(node.get());
+    return std::make_unique<nds::ReturnExprNode>(std::move(interpret_node(return_node->value)));
+}
 nds::ASTPtr Purah::PurahSpace::interpret_identifier(nds::ASTPtr& node) {
     if(node->nodeType() != nds::IdentifierExprType)
         throw excptn::PurahError("InterpreterError: Expected Identifier node at interpret_identifier");

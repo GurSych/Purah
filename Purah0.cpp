@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     std::string input{};
     while(std::getline(file,input)) {
         try {
-            purah.tokenize(input + "\n");
+            purah.tokenize(input);
         } catch (const excptn::LexerError& e) {
             if(COLORED) std::cout << "\033[35m" << e.what() << "\033[0m" << std::endl;
             else std::cout << e.what() << std::endl;
@@ -71,12 +71,12 @@ int main(int argc, char* argv[]) {
         else std::cout << e.what() << std::endl;
         return -1;
     }
-    if(DEBUG_MODE) {
-        if(COLORED) std::cout << "\033[32m";
-        std::cout << "|| Debug: AST nodes count: " 
-            << purah.AST_nodes_count() << std::endl;
-        if(COLORED) std::cout << "\033[0m";
-    }
+    //if(DEBUG_MODE) {
+    //    if(COLORED) std::cout << "\033[32m";
+    //    std::cout << "|| Debug: Parsed functions count: " 
+    //        << purah.functions_vector.size() << std::endl;
+    //    if(COLORED) std::cout << "\033[0m";
+    //}
     int result{};
     try {
         result = purah.interpret();

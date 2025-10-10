@@ -1,3 +1,4 @@
 func main\int () {
     COUT "Hello from the main function!"
+    return 1
 }

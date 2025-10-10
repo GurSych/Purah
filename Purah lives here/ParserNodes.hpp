@@ -17,6 +17,7 @@ namespace purah { namespace nds {
         NewVarNodeType,
         FunctionExprType,
         IdentifierExprType,
+        TypedIdentifierExprType,
         ClassObjectExprType,
         IntExprType, FloatExprType,
         BoolExprType, StringExprType,
@@ -58,7 +59,7 @@ namespace purah { namespace nds {
 
     class TypedIdentifierExprNode: public ASTNode {
         public:
-        ASTNodeType nodeType() override { return IdentifierExprType; }
+        ASTNodeType nodeType() override { return TypedIdentifierExprType; }
             TypedIdentifierExprNode(std::string _n, std::string _t) : name{_n}, type{_t} {}
             std::string name{};
             std::string type{};
