@@ -16,8 +16,8 @@ Purah0 will be the first version of interpreter. It will have a few standard typ
   - [X] Functions parsing
   - [ ] If-else statements parsing
 - [ ] Interpreter
-  - [ ] Memory
+  - [X] Memory
     - [X] Variables' storage
-    - [ ] Functions' storage
+    - [X] Functions' storage
   - [ ] Type conversion
-  - [ ] Calling stack
+  - [X] Calling stack

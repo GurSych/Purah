@@ -42,6 +42,12 @@ namespace purah { namespace mmry {
                     throw excptn::MemoryError(std::string{"Undefined memory address: "}+std::to_string(address));
                 return memory[address];
             }
+            void delete_cell(const uint64_t address) {
+                if(memory.count(address)) {
+                    memory.erase(address);
+                    free_addresses.push(address);
+                }
+            }
         private:
             std::unordered_map<uint64_t,MemoryCellPair> memory{};
             std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> free_addresses{};
@@ -71,6 +77,11 @@ namespace purah { namespace mmry {
             MemoryCellPair& get_var(const std::string& name) {
                 if(variables.count(name)) return global_storage.get_cell(variables[name]);
                 throw excptn::MemoryError(std::string{"Undefined variable name: "}+name);
+            }
+            ~VariableStorage() {
+                for(const auto& variable : variables) {
+                    global_storage.delete_cell(variable.second);
+                }
             }
         private:
             GlobalValueStorage& global_storage;
