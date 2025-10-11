@@ -5,6 +5,8 @@
 #include <queue>
 #include <map>
 
+#include <iostream>
+
 #ifdef EOF
     #undef EOF
 #endif
@@ -22,7 +24,7 @@ namespace purah { namespace mmry {
 
     class GlobalValueStorage {
         public:
-            GlobalValueStorage() {}
+            GlobalValueStorage() { }
             template<typename T>
             uint64_t new_cell(tkn::TokenType type, T value) {
                 uint64_t address{};
@@ -36,18 +38,19 @@ namespace purah { namespace mmry {
                 return address;
             }
             MemoryCellPair& get_cell(const uint64_t address) {
-                if(memory.count(address)) return memory[address];
-                throw excptn::MemoryError(std::string{"Undefined memory address: "}+std::to_string(address));
+                if(!memory.count(address))
+                    throw excptn::MemoryError(std::string{"Undefined memory address: "}+std::to_string(address));
+                return memory[address];
             }
         private:
-            std::map<uint64_t,MemoryCellPair> memory{};
+            std::unordered_map<uint64_t,MemoryCellPair> memory{};
             std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> free_addresses{};
             uint64_t max_address{};
     };
 
     class VariableStorage {
         public:
-            VariableStorage(GlobalValueStorage& global_storage) : global_storage(global_storage) {}
+            VariableStorage(GlobalValueStorage& _global_storage) : global_storage{_global_storage} { }
             template<typename T>
             uint64_t new_var(const std::string& name, tkn::TokenType type, T value) {
                 if(variables.count(name)) 

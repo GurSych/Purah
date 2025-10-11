@@ -95,13 +95,13 @@ namespace purah { namespace prsr {
         }
         nds::ASTPtr parse_identifier_statement() {
             std::string id_name   = token_iter->value;
-            nds::ASTPtr name_node = std::make_unique<nds::IdentifierExprNode>(id_name);
+            nds::ASTPtr name_node = std::make_shared<nds::IdentifierExprNode>(id_name);
             if(available()) {
                 go_next_token();
                 if(token_iter->type == tkn::EQUALS) {
                     go_next_token();
                     nds::ASTPtr value_node = parse_expression_statement();
-                    nds::ASTPtr node       = std::make_unique<nds::BinaryExprNode>(tkn::EQUALS, std::move(name_node), std::move(value_node));
+                    nds::ASTPtr node       = std::make_shared<nds::BinaryExprNode>(tkn::EQUALS, std::move(name_node), std::move(value_node));
                     return std::move(node);
                 }
                 else if(token_iter->type == tkn::L_BRACKET) {
@@ -114,40 +114,44 @@ namespace purah { namespace prsr {
                         else if(token_iter->type != tkn::R_BRACKET)
                             throw excptn::ParserError("Loosing call argument at line: " + std::to_string(token_iter->line));
                     }
-                    return std::make_unique<nds::CallExprNode>(id_name, std::move(call_args));
+                    go_next_token();
+                    return std::make_shared<nds::CallExprNode>(id_name, std::move(call_args));
                 }
-                --token_iter;
             }
             return std::move(name_node);
         }
         nds::ASTPtr parse_expression_statement(unsigned int min_priority = 0u) {
             nds::ASTPtr left = parse_primary_expression();
-            go_next_token();
             while(available() && tkn::is_binary_operator(token_iter->type) && (token_priority.at(token_iter->type) > min_priority)) {
                 tkn::TokenType op = token_iter->type;
                 unsigned int op_priority = token_priority.at(op);
                 go_next_token();
                 nds::ASTPtr right = parse_expression_statement(op_priority);
-                nds::ASTPtr node = std::make_unique<nds::BinaryExprNode>(op, std::move(left), std::move(right));
-                left = std::move(node);
+                nds::ASTPtr node = std::make_shared<nds::BinaryExprNode>(op, std::move(left), std::move(right));
+                return std::move(node);
             }
             return std::move(left);
         }
         nds::ASTPtr parse_primary_expression() {
             if(token_iter->type == tkn::INTEGER) {
                 int64_t value = std::stoll(token_iter->value);
-                return std::make_unique<nds::IntExprNode>(value);
+                go_next_token();
+                return std::make_shared<nds::IntExprNode>(value);
             }
             if(token_iter->type == tkn::FLOAT) {
                 double value = std::stod(token_iter->value);
-                return std::make_unique<nds::FloatExprNode>(value);
+                go_next_token();
+                return std::make_shared<nds::FloatExprNode>(value);
             }
             if(token_iter->type == tkn::BOOL) {
                 bool value = (token_iter->value == "true" ? true : false);
-                return std::make_unique<nds::BoolExprNode>(value);
+                go_next_token();
+                return std::make_shared<nds::BoolExprNode>(value);
             }
             else if(token_iter->type == tkn::STRING) {
-                return std::make_unique<nds::StringExprNode>(token_iter->value);
+                std::string value = token_iter->value;
+                go_next_token();
+                return std::make_shared<nds::StringExprNode>(value);
             }
             else if(token_iter->type == tkn::IDENTIFIER) {
                 return parse_identifier_statement();
@@ -157,6 +161,7 @@ namespace purah { namespace prsr {
                 nds::ASTPtr expr = parse_expression_statement();
                 if(token_iter->type != tkn::R_BRACKET)
                     throw excptn::ParserError("Loosing closing bracket at line: " + std::to_string(token_iter->line));
+                go_next_token();
                 return std::move(expr);
             }
             else {
@@ -172,7 +177,7 @@ namespace purah { namespace prsr {
             go_check_type(tkn::EQUALS, "Loosing new variable value at line: " + std::to_string(token_iter->line));
             go_next_token();
             nds::ASTPtr var_value = parse_expression_statement();
-            return std::make_unique<nds::NewVarNode>(var_type, var_name, std::move(var_value));
+            return std::make_shared<nds::NewVarNode>(var_type, var_name, std::move(var_value));
         }
         nds::ASTPtr parse_func_statement() {
             go_check_type(tkn::IDENTIFIER,  "Loosing new function name at line: " + std::to_string(token_iter->line));
@@ -189,10 +194,11 @@ namespace purah { namespace prsr {
                     go_check_type(tkn::BACKSLASH,  "Loosing argument type at line: " + std::to_string(token_iter->line));
                     go_check_type(tkn::IDENTIFIER, "Loosing argument type at line: " + std::to_string(token_iter->line));
                     std::string arg_type = token_iter->value;
-                    return std::make_unique<nds::TypedIdentifierExprNode>(arg_name,arg_type);
+                    go_next_token();
+                    return std::make_shared<nds::TypedIdentifierExprNode>(arg_name,arg_type);
                 };
                 func_args.push_back(std::move(parse_arg()));
-                while(token_iter->type != tkn::COMMA) {
+                while(token_iter->type == tkn::COMMA) {
                     go_check_type(tkn::IDENTIFIER, "Loosing argument at line: " + std::to_string(token_iter->line));
                     func_args.push_back(std::move(parse_arg()));
                 }
@@ -206,12 +212,12 @@ namespace purah { namespace prsr {
                 func_body.push_back(std::move(parse_statement()));
             }
             go_next_token();
-            return std::make_unique<nds::FunctionExprNode>(func_name,returning_type,std::move(func_args),std::move(func_body));
+            return std::make_shared<nds::FunctionExprNode>(func_name,returning_type,std::move(func_args),std::move(func_body));
         }
         nds::ASTPtr parse_return_statement() {
             go_next_token();
             nds::ASTPtr value = parse_expression_statement();
-            return std::make_unique<nds::ReturnExprNode>(std::move(value));
+            return std::make_shared<nds::ReturnExprNode>(std::move(value));
         }
         nds::ASTPtr parse_if_statement() {
             go_check_type(tkn::L_BRACKET, "Loosing bool if-condition at line: " + std::to_string(token_iter->line));
@@ -220,11 +226,12 @@ namespace purah { namespace prsr {
                 throw excptn::ParserError("Loosing closing bracket at line: " + std::to_string(token_iter->line));
             std::vector<nds::ASTPtr> body;
             // Boo!~ //
+            return std::make_shared<nds::ASTNode>(); 
         }
         nds::ASTPtr parse_COUT_statement() {
             go_next_token();
             nds::ASTPtr value = parse_expression_statement();
-            return std::make_unique<nds::COUTExprNode>(std::move(value));
+            return std::make_shared<nds::COUTExprNode>(std::move(value));
         }
     };
 

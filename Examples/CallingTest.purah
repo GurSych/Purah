@@ -1,0 +1,18 @@
+func main \int() {
+    return say_hello()
+}
+
+func say_hello \int() {
+    var hello\string = "Hello from the "
+    var space\string = " "
+    COUT hello
+    COUT say_name("calling",space)
+    COUT "!"
+    return 0
+}
+
+func say_name \string(str\string,f\string) {
+    COUT str
+    COUT f   
+    return "function"
+}

@@ -46,7 +46,8 @@ namespace purah { namespace lxr {
                 }
                 else if(std::isalpha(c)) {
                     std::string name{};
-                    while(isalpha(*iter) && iter < end) name += *iter++;
+                    while((std::isalpha(*iter) || std::isdigit(*iter) || *iter == '_' || *iter == '-') && iter < end)
+                        name += *iter++;
                     if(iter < end) --iter;
                     if(name == "true" || name == "false") tokens.emplace_back(tkn::BOOL,name,line);
                     else if(system_words.count(name)) tokens.emplace_back(system_words.at(name),name,line);
@@ -146,14 +147,17 @@ namespace purah { namespace lxr {
                 else if(c == '}') tokens.emplace_back(tkn::R_CRL_BRACKET,"}",line);
                 else if(c == '[') tokens.emplace_back(tkn::L_SQR_BRACKET,"{",line);
                 else if(c == ']') tokens.emplace_back(tkn::R_SQR_BRACKET,"}",line);
-                else throw excptn::LexerError("Unexpected input at line " + std::to_string(line));
+                else if(c == '~') {
+                    do { ++iter; } while(*iter != '~');
+                }
+                else throw excptn::LexerError("Unexpected input " + std::string{c} + " at line " + std::to_string(line));
                 ++iter;
             }
             //tokens.emplace_back(tkn::EOF,"",line);
             return tokens;
         }
-        void tokenize(const std::string& input) {
-            std::vector<tkn::Token> new_tokens = operator()(input,current_line);
+        void tokenize(const std::string& input, size_t line) {
+            std::vector<tkn::Token> new_tokens = operator()(input,line);
             tokens.insert(tokens.cend(),new_tokens.cbegin(),new_tokens.cend());
         }
         std::vector<tkn::Token>& get_tokens() {

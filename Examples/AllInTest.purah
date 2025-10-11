@@ -1,9 +1,9 @@
-func sum\String (str1\String, str2\String) {
-    return str1 + " " + (str2 + "!");
+func sum\string (str1\string, str2\string) {
+    return str1 + " " + (str2 + "!")
 }
 
-func main\Int () {
-    var name\String = "Dany";
-    COUT sum("Hello", name); ~ Hello Dany!
-    return 0;
+func main\int () {
+    var name\string = "Dany"
+    COUT sum("Hello", name) ~ Hello Dany! ~
+    return 0
 }

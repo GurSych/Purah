@@ -31,7 +31,7 @@ namespace purah { namespace nds {
         virtual ASTNodeType nodeType() { return SimpleAST; }
     };
 
-    using ASTPtr = std::unique_ptr<ASTNode>;
+    using ASTPtr = std::shared_ptr<ASTNode>;
 
     class NewVarNode: public ASTNode {
         public:
@@ -124,6 +124,8 @@ namespace purah { namespace nds {
                 : name{_n}, args{std::move(_a_s)} {}
             std::string         name{};
             std::vector<ASTPtr> args{};
+            bool                authorized{false};
+            ASTPtr              function{};
     };
 
     class ReturnExprNode: public ASTNode {
@@ -146,5 +148,13 @@ namespace purah { namespace nds {
             PrintExprNode(std::vector<ASTPtr>&& _o_a) : out_args{std::move(_o_a)} {}
             std::vector<ASTPtr> out_args{};
     };
+
+    std::string type_token_to_string(const ASTNodeType type) {
+            if (type == IntExprType)    return "int";
+            if (type == FloatExprType)  return "float";
+            if (type == BoolExprType)   return "bool";
+            if (type == StringExprType) return "string";
+            throw std::invalid_argument("Unsupported node type for type_token_to_string");
+        }
 
 } }

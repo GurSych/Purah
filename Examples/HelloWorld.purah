@@ -1,1 +1,4 @@
-COUT "Hello world!"
+func main\int() {
+    COUT "Hello world!"
+    return 0
+}

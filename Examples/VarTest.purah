@@ -1,3 +1,24 @@
-var world\string = "world"
-COUT "Hello "
-COUT world
+func main\int() {                ~ Creating main\int() function                      ~
+
+    var world\string = "world"   ~ Creating world\string variable with "world" value ~
+    COUT "Hello "                ~ Console out "Hello "                              ~
+    COUT world                   ~ Console out world variable                        ~
+    COUT "!\n"                   ~ Console out "!\n"                                 ~
+
+    var integer17\int = 17       ~ Creating integer17\int variable with 7 value      ~
+    COUT "integer17 is "         ~ Console out "integer17 is "                       ~
+    COUT integer17               ~ Console out integer17 variable                    ~
+    COUT "\n"                    ~ Console out "\n"                                  ~
+
+    var pi\float = 3.14          ~ Creating pi\float variable with 3.14 value        ~
+    COUT "Pi is "                ~ Console out "Pi is "                              ~
+    COUT pi                      ~ Console out pi variable                           ~
+    COUT "\n"                    ~ Console out "\n"                                  ~
+
+    var is_cool\bool = true      ~ Creating is_cool\bool variable with true value    ~
+    COUT "Is Purah cool: "       ~ Console out "Is Purah cool: "                     ~
+    COUT is_cool                 ~ Console out is_cool variable                      ~
+    COUT "\n"                    ~ Console out "\n"                                  ~
+
+    return 0                     ~ Returning 0                                       ~
+}

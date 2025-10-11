@@ -4,6 +4,7 @@
 #include "Purah.hpp"
 
 void print_tokens(const std::vector<purah::tkn::Token>& tokens);
+void print_stack(const std::stack<purah::Purah::PurahSpace>& stack);
 
 bool DEBUG_MODE  = false;
 bool NO_HELLO    = false;
@@ -49,9 +50,10 @@ int main(int argc, char* argv[]) {
     }
     purah::Purah purah{};
     std::string input{};
+    size_t line{};
     while(std::getline(file,input)) {
         try {
-            purah.tokenize(input);
+            purah.tokenize(input, ++line);
         } catch (const excptn::LexerError& e) {
             if(COLORED) std::cout << "\033[35m" << e.what() << "\033[0m" << std::endl;
             else std::cout << e.what() << std::endl;
@@ -71,12 +73,11 @@ int main(int argc, char* argv[]) {
         else std::cout << e.what() << std::endl;
         return -1;
     }
-    //if(DEBUG_MODE) {
-    //    if(COLORED) std::cout << "\033[32m";
-    //    std::cout << "|| Debug: Parsed functions count: " 
-    //        << purah.functions_vector.size() << std::endl;
-    //    if(COLORED) std::cout << "\033[0m";
-    //}
+    if(DEBUG_MODE) {
+        if(COLORED) std::cout << "\033[32m";
+        std::cout << "Parsing is done!" << std::endl;
+        if(COLORED) std::cout << "\033[0m";
+    }
     int result{};
     try {
         result = purah.interpret();
@@ -104,4 +105,11 @@ void print_tokens(const std::vector<purah::tkn::Token>& tokens) {
         std::cout << (i++ ? ", <" : "<") << token.type 
             << " '" << token.value << "' " << token.line << ">";
     std::cout << std::endl;
-} 
+}
+
+void print_stack(const std::stack<purah::Purah::PurahSpace>& stack) {
+    if(COLORED) std::cout << "\033[35m";
+    std::cout << "Stack: ";
+    // Boo!~ //
+    if(COLORED) std::cout << "\033[0m";
+}
