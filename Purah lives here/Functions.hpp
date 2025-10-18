@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "Exceptions.hpp"
 #include "AdditionalServices.hpp"
@@ -12,6 +13,7 @@ namespace purah { namespace fnc {
 
     class FunctionSignature {
     public:
+        FunctionSignature() { }
         FunctionSignature(std::string _n, std::string _t, std::vector<std::string> _a_t)
             : name{_n}, type{_t}, args_types{_a_t} {}
         FunctionSignature(std::string _n, std::vector<std::string> _a_t) : FunctionSignature(_n, "", _a_t) {}
@@ -26,6 +28,10 @@ namespace purah { namespace fnc {
                     throw excptn::PurahError("InterpreterError: Expected TypedIdentifier node for function argument");
                 nds::TypedIdentifierExprNode* arg_node = static_cast<nds::TypedIdentifierExprNode*>(arg.get());
                 args_types.push_back(arg_node->type);
+                if(std::find(args_names.begin(),args_names.end(),arg_node->name) != args_names.end()) {
+                    args_names.push_back(arg_node->name);
+                    throw excptn::PurahError("Function can't have same named arguments: "+to_full((func_node->args.size()==args_names.size()?"false":"true")));
+                }
                 args_names.push_back(arg_node->name);
             }
         }
@@ -36,6 +42,13 @@ namespace purah { namespace fnc {
         bool operator==(const FunctionSignature& other) const {
             return (name == other.name && args_types == other.args_types);
         }
+        FunctionSignature& operator=(const FunctionSignature& other) {
+            name = other.name;
+            type = other.type;
+            args_types = other.args_types;
+            args_names = other.args_names;
+            return *this;
+        }
         bool check_all(const FunctionSignature& other) {
             return (name == other.name && type == other.type && args_types == other.args_types);
         }
@@ -44,10 +57,25 @@ namespace purah { namespace fnc {
             if(full) str += type; 
             str += '(';
             unsigned int count{};
-            for(std::string& arg : args_types) {
+            for(std::string& arg_t : args_types) {
                 if(count++ != 0) str += ",";
-                str += "\\" + arg;
+                str += "\\" + arg_t;
             }
+            str += ')';
+            return str;
+        }
+        std::string to_full(bool not_all = false) {
+            std::string str = name + '\\';
+            str += type; 
+            str += '(';
+            unsigned int count{};
+            auto arg_n = args_names.begin();
+            for(std::string& arg_t : args_types) {
+                if(count++ != 0) str += ",";
+                str += *arg_n++;
+                str += "\\" + arg_t;
+            }
+            if(not_all) str += ",...";
             str += ')';
             return str;
         }

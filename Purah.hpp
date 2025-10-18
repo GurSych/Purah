@@ -38,10 +38,16 @@ namespace purah {
                 throw e;
             }
             for(nds::ASTPtr& func : parser->func_vector) {
-                fnc::FunctionSignature sign = fnc::FunctionSignature{func};
-                if(functions.contains(sign))
+                try {
+                    fnc::FunctionSignature sign = fnc::FunctionSignature{func};
+                    if(functions.contains(sign))
                     throw excptn::ParserError("Redefinition of function signature: " + sign.to_string(false));
-                functions[sign] = std::move(func);
+                    functions[sign] = std::move(func);
+                } catch (const excptn::PurahError& e) {
+                    throw e;
+                } catch (const excptn::ParserError& e) { 
+                    throw e;
+                }
             }
         }
         int64_t interpret() {

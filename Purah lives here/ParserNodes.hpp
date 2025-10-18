@@ -10,6 +10,7 @@
 
 #include "Tokens.hpp"
 
+
 namespace purah { namespace nds {
 
     enum ASTNodeType {
@@ -48,13 +49,12 @@ namespace purah { namespace nds {
         ASTNodeType nodeType() override { return FunctionExprType; }
             FunctionExprNode(const std::string& _n, const std::string& _t, 
                 std::vector<nds::ASTPtr>&& _args, std::vector<nds::ASTPtr>&& _body) 
-                : name{_n}, type{_t}, args{std::move(_args)}, body{std::move(_body)} {
-
-            }
+                : name{_n}, type{_t}, args{std::move(_args)}, body{std::move(_body)} { }
             std::string name{};
             std::string type{};
             std::vector<nds::ASTPtr> args{};
             std::vector<nds::ASTPtr> body{};
+            
     };
 
     class TypedIdentifierExprNode: public ASTNode {

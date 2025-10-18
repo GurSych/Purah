@@ -1,0 +1,25 @@
+func main\int() {
+    function()
+    function("world")
+    function(3.14)
+    return 0
+}
+
+func function\int(name\string) {
+    COUT "Hello "
+    COUT name
+    COUT "!\n"
+    return 0
+}
+
+func function\float(pi\float) {
+    COUT "Pi is "
+    COUT pi
+    COUT "\n"
+    return 14.7
+}
+
+func function\bool() {
+    COUT "Just bool\n"
+    return true
+}

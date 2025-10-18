@@ -72,6 +72,10 @@ int main(int argc, char* argv[]) {
         if(COLORED) std::cout << "\n\033[35m" << e.what() << "\033[0m" << std::endl;
         else std::cout << e.what() << std::endl;
         return -1;
+    } catch (const excptn::PurahError& e) {
+        if(COLORED) std::cout << "\n\033[35m" << e.what() << "\033[0m" << std::endl;
+        else std::cout << e.what() << std::endl;
+        return -1;
     }
     if(DEBUG_MODE) {
         if(COLORED) std::cout << "\033[32m";
