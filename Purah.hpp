@@ -13,6 +13,7 @@
 #include "Purah lives here/Memory.hpp"
 #include "Purah lives here/Functions.hpp"
 #include "Purah lives here/AdditionalServices.hpp"
+#include "Purah lives here/ParserNodes.hpp"
 
 using namespace purah;
 
@@ -117,10 +118,16 @@ namespace purah {
                 : AST_vector{ast}, purah{_purah}, variable_storage{_purah->global_storage}, has_stack_right{stack_right} {}
             PurahSpace(nds::ASTPtr ast, Purah* _purah, bool stack_right = true) 
                 : purah{_purah}, variable_storage{_purah->global_storage}, has_stack_right{stack_right} {
-                if(ast->nodeType() != nds::FunctionExprType)
+                if(ast->nodeType() == nds::FunctionExprType) {
+                    nds::FunctionExprNode* func_node = static_cast<nds::FunctionExprNode*>(ast.get());
+                    AST_vector = func_node->body;
+                }
+                else if(ast->nodeType() == nds::IfExprType) {
+                    nds::IfExprNode* if_node = static_cast<nds::IfExprNode*>(ast.get());
+                    AST_vector = if_node->body;
+                }
+                else
                     throw excptn::PurahError("InterpreterError: Expected FunctionExpr node for PurahSpace");
-                nds::FunctionExprNode* func_node = static_cast<nds::FunctionExprNode*>(ast.get());
-                AST_vector = func_node->body;
             }
             void set_var(nds::ASTPtr new_var_node) {
                 if(new_var_node->nodeType() != nds::NewVarNodeType) 
@@ -145,11 +152,28 @@ namespace purah {
                 }
                 throw excptn::PurahError("Expected a return node");
             }
+            nds::ASTPtr if_call() {
+                for(nds::ASTPtr& node : AST_vector) {
+                    nds::ASTPtr interpreted_node{};
+                    try {
+                        interpreted_node = interpret_node(node);
+                    } catch (const excptn::PurahError& e) {
+                        throw e;
+                    } catch (const excptn::MemoryError& e) {
+                        throw e;
+                    }
+                    if(interpreted_node->nodeType() == nds::ReturnExprType) {
+                        return std::move(interpreted_node);
+                    }
+                }
+                return std::make_shared<nds::ASTNode>();
+            }
             nds::ASTPtr interpret_node(nds::ASTPtr&);
             nds::ASTPtr interpret_function_call(nds::ASTPtr&);
             nds::ASTPtr interpret_return(nds::ASTPtr&);
             nds::ASTPtr interpret_identifier(nds::ASTPtr&);
             nds::ASTPtr interpret_new_var(nds::ASTPtr&);
+            nds::ASTPtr interpret_if(nds::ASTPtr&);
             nds::ASTPtr interpret_COUT(nds::ASTPtr&);
             std::vector<nds::ASTPtr> AST_vector{};
             mmry::VariableStorage    variable_storage;
@@ -192,6 +216,9 @@ nds::ASTPtr Purah::PurahSpace::interpret_node(nds::ASTPtr& node) {
         case nds::NewVarNodeType:
             return_node = interpret_new_var(node);
             break;
+        case nds::IfExprType:
+            return_node = interpret_if(node);
+            break;
         case nds::COUTExprType:
             return_node = interpret_COUT(node);
             break;
@@ -203,7 +230,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_node(nds::ASTPtr& node) {
 }
 nds::ASTPtr Purah::PurahSpace::interpret_function_call(nds::ASTPtr& node) {
     if(node->nodeType() != nds::CallExprType)
-        throw excptn::PurahError("InterpreterError: Expected CallExpr node at interpret_identifier");
+        throw excptn::PurahError("InterpreterError: Expected CallExpr node at interpret_function_call");
     nds::CallExprNode* call_node = static_cast<nds::CallExprNode*>(node.get());
     std::vector<nds::ASTPtr> arguments{};
     for(nds::ASTPtr& arg : call_node->args) {
@@ -239,7 +266,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_function_call(nds::ASTPtr& node) {
 }
 nds::ASTPtr Purah::PurahSpace::interpret_return(nds::ASTPtr& node) {
     if(node->nodeType() != nds::ReturnExprType)
-        throw excptn::PurahError("InterpreterError: Expected ReturnExpr node at interpret_identifier");
+        throw excptn::PurahError("InterpreterError: Expected ReturnExpr node at interpret_return");
     nds::ReturnExprNode* return_node = static_cast<nds::ReturnExprNode*>(node.get());
     return std::make_shared<nds::ReturnExprNode>(std::move(interpret_node(return_node->value)));
 }
@@ -306,6 +333,32 @@ nds::ASTPtr Purah::PurahSpace::interpret_new_var(nds::ASTPtr& node) {
     }
     return std::make_shared<nds::ASTNode>();
 }
+nds::ASTPtr Purah::PurahSpace::interpret_if(nds::ASTPtr& node) {
+    nds::ASTPtr local_node = node;
+    while(true) {
+        if(local_node->nodeType() == nds::SimpleAST) break;
+        if(local_node->nodeType() != nds::IfExprType)
+            throw excptn::PurahError("InterpreterError: Expected IfExpr node at interpret_if");
+        nds::IfExprNode* if_node = static_cast<nds::IfExprNode*>(local_node.get());
+        nds::ASTPtr condition    = std::move(interpret_node(if_node->condition));
+        if(condition->nodeType() != nds::BoolExprType)
+            throw excptn::PurahError("If-statement condition must be bool");
+        nds::BoolExprNode* cond_node = static_cast<nds::BoolExprNode*>(condition.get());
+        if(cond_node->value == true) {
+            purah->calling_stack.emplace(local_node,purah,true);
+            nds::ASTPtr return_node = purah->calling_stack.top().if_call();
+            purah->calling_stack.pop();
+            if(return_node->nodeType() == nds::ReturnExprType) {
+                return std::move(return_node);
+            }
+            break;
+        }
+        else {
+            local_node = if_node->next_if;
+        }
+    }
+    return std::make_shared<nds::ASTNode>();
+}
 nds::ASTPtr Purah::PurahSpace::interpret_COUT(nds::ASTPtr& node) {
     if(node->nodeType() != nds::COUTExprType)
         throw excptn::PurahError("InterpreterError: Expected COUT node at interpret_COUT");
@@ -333,7 +386,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_COUT(nds::ASTPtr& node) {
             std::cout << string_node->value;
         } break;
         default: {
-            throw excptn::PurahError("Unsupported COUT argument type");
+            throw excptn::PurahError("Unsupported COUT node type");
         } break;
     }
     return std::make_shared<nds::ASTNode>();

@@ -10,7 +10,6 @@
 
 #include "Tokens.hpp"
 
-
 namespace purah { namespace nds {
 
     enum ASTNodeType {
@@ -24,6 +23,7 @@ namespace purah { namespace nds {
         BoolExprType, StringExprType,
         BinaryExprType,
         CallExprType, ReturnExprType,
+        IfExprType,
         COUTExprType, PrintExprType
     };
 
@@ -53,8 +53,7 @@ namespace purah { namespace nds {
             std::string name{};
             std::string type{};
             std::vector<nds::ASTPtr> args{};
-            std::vector<nds::ASTPtr> body{};
-            
+            std::vector<nds::ASTPtr> body{}; 
     };
 
     class TypedIdentifierExprNode: public ASTNode {
@@ -133,6 +132,16 @@ namespace purah { namespace nds {
         ASTNodeType nodeType() override { return ReturnExprType; }
             ReturnExprNode(ASTPtr _v) : value{std::move(_v)} { }
             ASTPtr value{};
+    };
+
+    class IfExprNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return IfExprType; }
+            IfExprNode(nds::ASTPtr _condition, std::vector<nds::ASTPtr>&& _body, nds::ASTPtr _n_i) 
+                : condition{std::move(_condition)}, body{std::move(_body)}, next_if{std::move(_n_i)} { }
+            nds::ASTPtr condition{};
+            std::vector<nds::ASTPtr> body{};
+            nds::ASTPtr next_if{};
     };
 
     class COUTExprNode: public ASTNode {

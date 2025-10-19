@@ -1,0 +1,17 @@
+func main\int() {
+    if(true) {
+        COUT "Hello from if!"
+        var a\bool = true
+        if(a) {
+            COUT "\nHello from a!"
+            return 1
+        }
+    }
+    else if (false) {
+        COUT "\nHello from else!"
+    } else {
+        COUT "\nHello from 2-else!"
+    }
+    COUT "\nHi from main!"
+    return 0
+}

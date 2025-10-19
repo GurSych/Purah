@@ -1,11 +1,10 @@
 #pragma once
+#include <unordered_map>
 #include <stdint.h>
 #include <variant>
 #include <string>
 #include <queue>
 #include <map>
-
-#include <iostream>
 
 #ifdef EOF
     #undef EOF
@@ -13,7 +12,6 @@
 
 #include "Exceptions.hpp"
 #include "Tokens.hpp"
-#include "Lexer.hpp"
 
 using namespace purah;
 

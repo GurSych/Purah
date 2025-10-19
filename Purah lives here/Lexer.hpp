@@ -1,9 +1,7 @@
 #pragma once
-#include <exception>
 #include <vector>
 #include <string>
 #include <cctype>
-#include <regex>
 #include <map>
 
 #include "Exceptions.hpp"
@@ -24,7 +22,8 @@ namespace purah { namespace lxr {
         Lexer() {}
         std::vector<tkn::Token> operator()(const std::string& input, size_t s_line = 0ull) {
             std::vector<tkn::Token> tokens{};
-            size_t& line = (s_line == 0ull ? s_line : current_line);
+            //size_t& line = (s_line == 0ull ? s_line : current_line);
+            size_t line = s_line;
             std::string::const_iterator iter = input.cbegin();
             std::string::const_iterator end  = input.cend();
             while(iter < end) {
