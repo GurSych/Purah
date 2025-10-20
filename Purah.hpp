@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <stdint.h>
+#include <optional>
 #include <fstream>
 #include <string>
 #include <memory>
@@ -12,7 +13,6 @@
 #include "Purah lives here/Exceptions.hpp"
 #include "Purah lives here/Memory.hpp"
 #include "Purah lives here/Functions.hpp"
-#include "Purah lives here/AdditionalServices.hpp"
 #include "Purah lives here/ParserNodes.hpp"
 
 using namespace purah;
@@ -61,7 +61,7 @@ namespace purah {
                 nds::ASTPtr main_func = std::move(functions[main_sign]);
                 if(!main_sign.check_all(main_func))
                     throw excptn::PurahError("There's no main\\int() function!");
-                calling_stack.emplace(main_func,this,false);
+                calling_stack.emplace(main_func,this,nullptr);
                 nds::ASTPtr return_node = calling_stack.top()();
                 result = get_cpp_from_ast<int64_t>(return_node);
                 calling_stack.pop();
@@ -114,10 +114,10 @@ namespace purah {
         }
         class PurahSpace {
         public:
-            PurahSpace(std::vector<nds::ASTPtr> ast, Purah* _purah, bool stack_right = true) 
-                : AST_vector{ast}, purah{_purah}, variable_storage{_purah->global_storage}, has_stack_right{stack_right} {}
-            PurahSpace(nds::ASTPtr ast, Purah* _purah, bool stack_right = true) 
-                : purah{_purah}, variable_storage{_purah->global_storage}, has_stack_right{stack_right} {
+            PurahSpace(std::vector<nds::ASTPtr> ast, Purah* _purah, PurahSpace* _p_s = nullptr) 
+                : AST_vector{ast}, purah{_purah}, variable_storage{_purah->global_storage}, previous_space{_p_s} {}
+            PurahSpace(nds::ASTPtr ast, Purah* _purah, PurahSpace* _p_s = nullptr) 
+                : purah{_purah}, variable_storage{_purah->global_storage}, previous_space{_p_s} {
                 if(ast->nodeType() == nds::FunctionExprType) {
                     nds::FunctionExprNode* func_node = static_cast<nds::FunctionExprNode*>(ast.get());
                     AST_vector = func_node->body;
@@ -133,6 +133,15 @@ namespace purah {
                 if(new_var_node->nodeType() != nds::NewVarNodeType) 
                     throw excptn::PurahError("InterpreterError: Expected NewVar node at set_var");
                 interpret_new_var(new_var_node);
+            }
+            std::optional<mmry::MemoryCellPair*> get_var(const std::string& name) {
+                if(variable_storage.check_var(name)) {
+                    return std::optional<mmry::MemoryCellPair*>{&variable_storage.get_var(name)};
+                }
+                if(previous_space == nullptr) {
+                    return std::optional<mmry::MemoryCellPair*>{};
+                }
+                return previous_space->get_var(name);
             }
             nds::ASTPtr operator()() {
                 for(nds::ASTPtr& node : AST_vector) {
@@ -177,9 +186,9 @@ namespace purah {
             nds::ASTPtr interpret_COUT(nds::ASTPtr&);
             std::vector<nds::ASTPtr> AST_vector{};
             mmry::VariableStorage    variable_storage;
-            const bool               has_stack_right{};
         private:
-            Purah* purah{};
+            Purah*      purah{};
+            PurahSpace* previous_space{};
         };
     private:
         std::unordered_map<fnc::FunctionSignature,nds::ASTPtr> functions{};
@@ -249,7 +258,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_function_call(nds::ASTPtr& node) {
         else throw excptn::PurahError("There's no function with " + sign.to_string(false) + " signature to call");
     }
     fnc::FunctionSignature func_sign{call_node->function};
-    purah->calling_stack.emplace(call_node->function,purah,false);
+    purah->calling_stack.emplace(call_node->function,purah);
     std::vector<nds::ASTPtr>::const_iterator arg = arguments.cbegin();
     std::vector<std::string>::const_iterator name_arg = func_sign.args_names.cbegin();
     for(auto type_arg = func_sign.args_types.cbegin(); type_arg < func_sign.args_types.cend(); ++type_arg, ++name_arg, ++arg) {
@@ -275,16 +284,19 @@ nds::ASTPtr Purah::PurahSpace::interpret_identifier(nds::ASTPtr& node) {
         throw excptn::PurahError("InterpreterError: Expected Identifier node at interpret_identifier");
     nds::IdentifierExprNode* id_node = static_cast<nds::IdentifierExprNode*>(node.get());
     std::string var_name = id_node->name;
-    mmry::MemoryCellPair& cell = variable_storage.get_var(var_name);
-    switch(cell.first) {
+    std::optional<mmry::MemoryCellPair*> cell_optional = get_var(var_name);
+    if(!cell_optional.has_value())
+        throw excptn::PurahError(std::string{"Undefined variable name: "}+var_name);
+    mmry::MemoryCellPair* cell = cell_optional.value();
+    switch(cell->first) {
         case tkn::INTEGER:
-            return std::make_shared<nds::IntExprNode>(std::get<int64_t>(cell.second));
+            return std::make_shared<nds::IntExprNode>(std::get<int64_t>(cell->second));
         case tkn::FLOAT:
-            return std::make_shared<nds::FloatExprNode>(std::get<double>(cell.second));
+            return std::make_shared<nds::FloatExprNode>(std::get<double>(cell->second));
         case tkn::BOOL:
-            return std::make_shared<nds::BoolExprNode>(std::get<bool>(cell.second));
+            return std::make_shared<nds::BoolExprNode>(std::get<bool>(cell->second));
         case tkn::STRING:
-            return std::make_shared<nds::StringExprNode>(std::get<std::string>(cell.second));
+            return std::make_shared<nds::StringExprNode>(std::get<std::string>(cell->second));
         default:
             throw excptn::PurahError("Unsupported variable type at interpret_identifier");
             break;
@@ -345,7 +357,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_if(nds::ASTPtr& node) {
             throw excptn::PurahError("If-statement condition must be bool");
         nds::BoolExprNode* cond_node = static_cast<nds::BoolExprNode*>(condition.get());
         if(cond_node->value == true) {
-            purah->calling_stack.emplace(local_node,purah,true);
+            purah->calling_stack.emplace(local_node,purah,this);
             nds::ASTPtr return_node = purah->calling_stack.top().if_call();
             purah->calling_stack.pop();
             if(return_node->nodeType() == nds::ReturnExprType) {

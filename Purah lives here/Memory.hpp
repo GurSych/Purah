@@ -17,7 +17,7 @@ using namespace purah;
 
 namespace purah { namespace mmry {
 
-    using TypeVariant = std::variant<int64_t,double,std::string,bool>;
+    using TypeVariant    = std::variant<int64_t,double,std::string,bool>;
     using MemoryCellPair = std::pair<tkn::TokenType,TypeVariant>;
 
     class GlobalValueStorage {
@@ -71,6 +71,9 @@ namespace purah { namespace mmry {
                 MemoryCellPair& cell = global_storage.get_cell(address);
                 cell.second = value;
                 return cell;
+            }
+            bool check_var(const std::string& name) {
+                return variables.count(name);
             }
             MemoryCellPair& get_var(const std::string& name) {
                 if(variables.count(name)) return global_storage.get_cell(variables[name]);

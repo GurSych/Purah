@@ -1,9 +1,12 @@
 func main\int() {
+    var name\string = "main"
     if(true) {
         COUT "Hello from if!"
         var a\bool = true
         if(a) {
             COUT "\nHello from a!"
+            COUT " and special hello from "
+            COUT name
             return 1
         }
     }
