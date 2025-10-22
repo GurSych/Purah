@@ -11,6 +11,8 @@
 
 #include "Tokens.hpp"
 
+using namespace purah;
+
 namespace purah { namespace nds {
 
     enum ASTNodeType {
@@ -54,7 +56,7 @@ namespace purah { namespace nds {
             std::string name{};
             std::string type{};
             std::vector<nds::ASTPtr> args{};
-            std::vector<nds::ASTPtr> body{}; 
+            std::vector<nds::ASTPtr> body{};
     };
 
     class TypedIdentifierExprNode: public ASTNode {

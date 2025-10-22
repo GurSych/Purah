@@ -73,6 +73,9 @@ namespace purah { namespace prsr {
         }
         static inline const std::map<tkn::TokenType,unsigned int> token_priority{
             {tkn::EMPTY,0},
+            {tkn::EQUALITY,10},{tkn::NO_EQUALITY,10},
+            {tkn::MORE,15},{tkn::LESS,15},
+            {tkn::MORE_OR_EQUALITY,15},{tkn::LESS_OR_EQUALITY,15},
             {tkn::PLUS,20},{tkn::MINUS,20},
             {tkn::STAR,30},{tkn::SLASH,30},{tkn::DBL_SLASH,30},{tkn::PERCENT,30}
         };
@@ -124,7 +127,7 @@ namespace purah { namespace prsr {
         }
         nds::ASTPtr parse_expression_statement(unsigned int min_priority = 0u) {
             nds::ASTPtr left = parse_primary_expression();
-            while(available() && tkn::is_binary_operator(token_iter->type) && (token_priority.at(token_iter->type) > min_priority)) {
+            while(available() && tkn::is_binary_operator(token_iter->type) && (token_priority.at(token_iter->type) >= min_priority)) {
                 tkn::TokenType op = token_iter->type;
                 unsigned int op_priority = token_priority.at(op);
                 go_next_token();

@@ -45,7 +45,7 @@ namespace purah { namespace lxr {
                 }
                 else if(std::isalpha(c)) {
                     std::string name{};
-                    while((std::isalpha(*iter) || std::isdigit(*iter) || *iter == '_' || *iter == '-') && iter < end)
+                    while((std::isalpha(*iter) || std::isdigit(*iter) || *iter == '_') && iter < end)
                         name += *iter++;
                     if(iter < end) --iter;
                     if(name == "true" || name == "false") tokens.emplace_back(tkn::BOOL,name,line);

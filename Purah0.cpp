@@ -10,25 +10,26 @@ void print_stack(const std::stack<purah::Purah::PurahSpace>& stack);
 bool DEBUG_MODE  = false;
 bool NO_HELLO    = false;
 bool YES_GOODBYE = false;
-bool COLORED     = false;
+bool COLORED     = true;
 
 int main(int argc, char* argv[]) {
     if(argc > 2) {
         for(unsigned int i = 2u; i < argc; ++i) {
-            if(std::string{argv[i]} == "--debug" || std::string{argv[i]} == "-d") {
+            std::string arg{argv[i]};
+            if(arg == "--debug" || arg == "-d") {
                 DEBUG_MODE = true;
                 continue;
             }
-            if(std::string{argv[i]} == "--no-hello" || std::string{argv[i]} == "-nh") {
+            if(arg == "--no-hello" || arg == "-nh") {
                 NO_HELLO = true;
                 continue;
             }
-            if(std::string{argv[i]} == "--yes-goodbye" || std::string{argv[i]} == "-yg") {
+            if(arg == "--yes-goodbye" || arg == "-yg") {
                 YES_GOODBYE = true;
                 continue;
             }
-            if(std::string{argv[i]} == "--colorful") {
-                COLORED = true;
+            if(arg == "--no-color" || arg == "-nc") {
+                COLORED = false;
                 continue;
             }
             std::cout << "|| Purah0: unknown argument '" << argv[i] << "'" << std::endl;
@@ -45,9 +46,11 @@ int main(int argc, char* argv[]) {
     }
     std::ifstream file{argv[1]};
     if(!file) {
+        if(COLORED) std::cout << "\033[31m";
         std::cout << "|| Purah0: can't open '"
             << argv[1] << "' file" << std::endl;
         return -1;
+        if(COLORED) std::cout << "\033[0m";
     }
     purah::Purah purah{};
     std::string input{};

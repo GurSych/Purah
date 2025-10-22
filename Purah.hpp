@@ -40,9 +40,9 @@ namespace purah {
             }
             for(nds::ASTPtr& func : parser->func_vector) {
                 try {
-                    fnc::FunctionSignature sign = fnc::FunctionSignature{func};
+                    fnc::FunctionSignature sign{func};
                     if(functions.contains(sign))
-                    throw excptn::ParserError("Redefinition of function signature: " + sign.to_string(false));
+                        throw excptn::ParserError("Redefinition of function signature: " + sign.to_string(false));
                     functions[sign] = std::move(func);
                 } catch (const excptn::PurahError& e) {
                     throw e;
@@ -54,7 +54,7 @@ namespace purah {
         int64_t interpret() {
             if(functions.empty()) return -1;
             int64_t result{};
-            fnc::FunctionSignature main_sign = fnc::FunctionSignature{"main","int",std::vector<std::string>{}};
+            fnc::FunctionSignature main_sign{"main","int",std::vector<std::string>{}};
             try {
                 if(!functions.count(main_sign))
                     throw excptn::PurahError("There's no main\\int() function!");
@@ -110,6 +110,20 @@ namespace purah {
                 return string_node->value;
             } else {
                 throw std::invalid_argument("Unsupported type for get_cpp_from_ast");
+            }
+        }
+        template <typename T>
+        static nds::ASTPtr get_ast_from_cpp(T value) {
+            if constexpr (std::is_same_v<T, int64_t>) {
+                return std::make_shared<nds::IntExprNode>(value);
+            } else if constexpr (std::is_same_v<T, double>) {
+                return std::make_shared<nds::FloatExprNode>(value);
+            } else if constexpr (std::is_same_v<T, bool>) {
+                return std::make_shared<nds::BoolExprNode>(value);
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                return std::make_shared<nds::StringExprNode>(value);
+            } else {
+                throw std::invalid_argument("Unsupported type for get_ast_from_cpp");
             }
         }
         class PurahSpace {
@@ -181,6 +195,7 @@ namespace purah {
             nds::ASTPtr interpret_function_call(nds::ASTPtr&);
             nds::ASTPtr interpret_return(nds::ASTPtr&);
             nds::ASTPtr interpret_identifier(nds::ASTPtr&);
+            nds::ASTPtr interpret_binary(nds::ASTPtr&);
             nds::ASTPtr interpret_new_var(nds::ASTPtr&);
             nds::ASTPtr interpret_if(nds::ASTPtr&);
             nds::ASTPtr interpret_COUT(nds::ASTPtr&);
@@ -215,6 +230,9 @@ nds::ASTPtr Purah::PurahSpace::interpret_node(nds::ASTPtr& node) {
         case nds::BoolExprType: 
         case nds::StringExprType:
             return_node = node;
+            break;
+        case nds::BinaryExprType:
+            return_node = interpret_binary(node);
             break;
         case nds::CallExprType:
             return_node = interpret_function_call(node);
@@ -401,5 +419,294 @@ nds::ASTPtr Purah::PurahSpace::interpret_COUT(nds::ASTPtr& node) {
             throw excptn::PurahError("Unsupported COUT node type");
         } break;
     }
+    return std::make_shared<nds::ASTNode>();
+}
+nds::ASTPtr Purah::PurahSpace::interpret_binary(nds::ASTPtr& node) {
+    if(node->nodeType() != nds::BinaryExprType)
+        throw excptn::PurahError("InterpreterError: Expected BinaryExpr node at interpret_binary");
+    nds::BinaryExprNode* bin_node = static_cast<nds::BinaryExprNode*>(node.get());
+    nds::ASTPtr left  = interpret_node(bin_node->left);
+    nds::ASTPtr right = interpret_node(bin_node->right);
+    switch(bin_node->op) {
+        case tkn::PLUS: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<int64_t>(left_value+right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<double>(left_value+right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<std::string>(left_value+right_value);
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value+right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for + operator");
+                    break;
+            }
+        } break;
+        case tkn::MINUS: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<int64_t>(left_value-right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<double>(left_value-right_value);
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value-right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for - operator");
+                    break;
+            }
+        } break;
+        case tkn::STAR: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<int64_t>(left_value*right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<double>(left_value*right_value);
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value*right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for * operator");
+                    break;
+            }
+        } break;
+        case tkn::SLASH: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<double>(left_value/right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<double>(left_value/right_value);
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value/right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for / operator");
+                    break;
+            }
+        } break;
+        case tkn::EQUALITY: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<bool>(left_value==right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<bool>(left_value==right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<bool>(left_value==right_value);
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value==right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for == operator");
+                    break;
+            }
+        } break;
+        case tkn::MORE: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<bool>(left_value>right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<bool>(left_value>right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<bool>(left_value.size()>right_value.size());
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value>right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for > operator");
+                    break;
+            }
+        } break;
+        case tkn::LESS: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<bool>(left_value<right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<bool>(left_value<right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<bool>(left_value.size()<right_value.size());
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value<right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for < operator");
+                    break;
+            }
+        } break;
+        case tkn::MORE_OR_EQUALITY: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<bool>(left_value>=right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<bool>(left_value>=right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<bool>(left_value.size()>=right_value.size());
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value>=right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for >= operator");
+                    break;
+            }
+        } break;
+        case tkn::LESS_OR_EQUALITY: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<bool>(left_value<=right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<bool>(left_value<=right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<bool>(left_value.size()<=right_value.size());
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value<=right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for <= operator");
+                    break;
+            }
+        } break;
+        case tkn::NO_EQUALITY: {
+            if(left->nodeType() != right->nodeType())
+                throw excptn::PurahError("Nodes should has the same type to be handeled by operator");
+            switch(left->nodeType()) {
+                case nds::IntExprType: {
+                    int64_t left_value  = get_cpp_from_ast<int64_t>(left);
+                    int64_t right_value = get_cpp_from_ast<int64_t>(right);
+                    return get_ast_from_cpp<bool>(left_value!=right_value);
+                } break;
+                case nds::FloatExprType: {
+                    double left_value  = get_cpp_from_ast<double>(left);
+                    double right_value = get_cpp_from_ast<double>(right);
+                    return get_ast_from_cpp<bool>(left_value!=right_value);
+                } break;
+                case nds::StringExprType: {
+                    std::string left_value  = get_cpp_from_ast<std::string>(left);
+                    std::string right_value = get_cpp_from_ast<std::string>(right);
+                    return get_ast_from_cpp<bool>(left_value!=right_value);
+                } break;
+                case nds::BoolExprType: {
+                    bool left_value  = get_cpp_from_ast<bool>(left);
+                    bool right_value = get_cpp_from_ast<bool>(right);
+                    return get_ast_from_cpp<bool>(left_value!=right_value);
+                } break;
+                default:
+                    throw excptn::PurahError("Unsupported type for != operator");
+                    break;
+            }
+        } break;
+        default:
+            throw excptn::PurahError("I can't handle this operator yet");
+            break;
+    }
+    /// Boo!~ ///
     return std::make_shared<nds::ASTNode>();
 }

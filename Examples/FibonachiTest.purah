@@ -1,0 +1,22 @@
+func main\int() {
+    fibonachi(18)
+    return 0
+}
+
+func fibonachi\int(steps\int) {
+    return fibonachi(steps,"\t")
+}
+
+func fibonachi\int(steps\int,sep\string) {
+    return fibonachi(0,1,0,steps,sep)
+}
+
+func fibonachi\int(prev\int,now\int,step\int,steps\int,sep\string) {
+    if(step == steps) { return 0 }
+    var new_node\int = prev + now
+    if(step != 0) { COUT sep }
+    ~ COUT step+1 ~
+    ~ COUT ". " ~
+    COUT new_node
+    return fibonachi(now,new_node,step+1,steps,sep)
+}

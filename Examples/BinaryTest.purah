@@ -1,0 +1,11 @@
+func main\int() {
+    var name \string = "Dany"
+    if(name == "Dany") {
+        var welcome\string = "Welcome back, sir!"
+        COUT welcome
+    } else {
+        var hello\string = "Hello, " + name + "!"
+        COUT hello
+    }
+    return 0
+}
