@@ -1,0 +1,15 @@
+func main\int() {
+    var i\int = 0
+    var n\int = 7
+    while(i < n) {
+        if(i != 0) { COUT "\n" }
+        COUT "Hello from while"
+        i = i + 1
+    }
+    while(true) {
+        COUT "\nWow, that's still \"true\" ..."
+        if(i == 0-4) { break }
+        i = i - 1
+    }
+    return 0
+}

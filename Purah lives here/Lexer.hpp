@@ -58,8 +58,8 @@ namespace purah { namespace lxr {
                 else if(c == ';') tokens.emplace_back(tkn::SEMICOLON,";",line);
                 else if(c == '"') {
                     std::string str{}; ++iter;
-                    while(*iter != '"' && iter < end) {
-                        static bool special_char = false;
+                    bool special_char = false;
+                    while((*iter != '"' || special_char) && iter < end) {
                         if(special_char) {
                             if(*iter == 'n')       str += '\n';
                             else if(*iter == 't')  str += '\t';
@@ -73,7 +73,7 @@ namespace purah { namespace lxr {
                             else if(*iter == 'f')  str += '\f';
                             else if(*iter == 'v')  str += '\v';
                             else 
-                                throw excptn::LexerError("Unknown special character at line " + std::to_string(line));
+                                throw excptn::LexerError("Unknown special character '" + std::string{*iter} + "' at line " + std::to_string(line));
                             special_char = false; ++iter;
                             continue;
                         }
@@ -172,6 +172,7 @@ namespace purah { namespace lxr {
             {"if",tkn::IF},{"else",tkn::ELSE},
             {"not",tkn::NOT},{"and",tkn::AND},{"or",tkn::OR},
             {"while",tkn::WHILE},{"for",tkn::FOR},
+            {"break",tkn::BREAK},{"continue",tkn::CONTINUE},
             {"COUT",tkn::COUT}
         };
     private:

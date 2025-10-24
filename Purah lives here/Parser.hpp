@@ -62,6 +62,17 @@ namespace purah { namespace prsr {
                 case tkn::IF:
                     node = parse_if_statement();
                     break;
+                case tkn::WHILE:
+                    node = parse_while_statement();
+                    break;
+                case tkn::BREAK:
+                    node = std::make_shared<nds::BreakNode>();
+                    go_next_token();
+                    break;
+                case tkn::CONTINUE:
+                    node = std::make_shared<nds::ContinueNode>();
+                    go_next_token();
+                    break;
                 case tkn::COUT:
                     node = parse_COUT_statement();
                     break;
@@ -106,8 +117,7 @@ namespace purah { namespace prsr {
                 if(token_iter->type == tkn::EQUALS) {
                     go_next_token();
                     nds::ASTPtr value_node = parse_expression_statement();
-                    nds::ASTPtr node       = std::make_shared<nds::BinaryExprNode>(tkn::EQUALS, std::move(name_node), std::move(value_node));
-                    return std::move(node);
+                    return std::make_shared<nds::BinaryExprNode>(tkn::EQUALS, std::move(name_node), std::move(value_node));
                 }
                 else if(token_iter->type == tkn::L_BRACKET) {
                     go_next_token();
@@ -266,6 +276,21 @@ namespace purah { namespace prsr {
                 return std::make_shared<nds::IfExprNode>(std::move(condition),std::move(body),std::move(next_node));
             }
             else return std::make_shared<nds::ASTNode>();
+        }
+        nds::ASTPtr parse_while_statement() {
+            go_check_type(tkn::L_BRACKET, "Loosing bool while-condition at line: " + std::to_string(token_iter->line));
+            go_next_token();
+            nds::ASTPtr condition = parse_expression_statement();
+            if(token_iter->type != tkn::R_BRACKET)
+                throw excptn::ParserError("Loosing closing bracket at line: " + std::to_string(token_iter->line));
+            go_check_type(tkn::L_CRL_BRACKET, "Loosing while-statement body at line: " + std::to_string(token_iter->line));
+            std::vector<nds::ASTPtr> body;
+            go_next_token();
+            while (token_iter->type != tkn::R_CRL_BRACKET) {
+                body.push_back(std::move(parse_statement()));
+            }
+            go_next_token();
+            return std::make_shared<nds::WhileExprNode>(std::move(condition),std::move(body));
         }
         nds::ASTPtr parse_COUT_statement() {
             go_next_token();

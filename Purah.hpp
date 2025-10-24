@@ -72,20 +72,6 @@ namespace purah {
             }
             return result;
         }
-        static tkn::TokenType string_to_token_type(const std::string& type) {
-            if (type == "int")     return tkn::INTEGER;
-            if (type == "float")   return tkn::FLOAT;
-            if (type == "bool")    return tkn::BOOL;
-            if (type == "string")  return tkn::STRING;
-            throw std::invalid_argument("Unknown token type: " + type);
-        }
-        static std::string type_token_to_string(const tkn::TokenType type) {
-            if (type == tkn::INTEGER) return "int";
-            if (type == tkn::FLOAT)   return "float";
-            if (type == tkn::BOOL)    return "bool";
-            if (type == tkn::STRING)  return "string";
-            throw std::invalid_argument("Unsupported type for type_token_to_string");
-        }
         template <typename T>
         static T get_cpp_from_ast(nds::ASTPtr& node) {
             if constexpr (std::is_same_v<T, int64_t>) {
@@ -140,6 +126,10 @@ namespace purah {
                     nds::IfExprNode* if_node = static_cast<nds::IfExprNode*>(ast.get());
                     AST_vector = if_node->body;
                 }
+                else if(ast->nodeType() == nds::WhileExprType) {
+                    nds::WhileExprNode* while_node = static_cast<nds::WhileExprNode*>(ast.get());
+                    AST_vector = while_node->body;
+                }
                 else
                     throw excptn::PurahError("InterpreterError: Expected FunctionExpr node for PurahSpace");
             }
@@ -188,6 +178,34 @@ namespace purah {
                     if(interpreted_node->nodeType() == nds::ReturnExprType) {
                         return std::move(interpreted_node);
                     }
+                    if(interpreted_node->nodeType() == nds::BreakNodeType) {
+                        return std::move(interpreted_node);
+                    }
+                    if(interpreted_node->nodeType() == nds::ContinueNodeType) {
+                        return std::move(interpreted_node);
+                    }
+                }
+                return std::make_shared<nds::ASTNode>();
+            }
+            nds::ASTPtr while_call() {
+                for(nds::ASTPtr& node : AST_vector) {
+                    nds::ASTPtr interpreted_node{};
+                    try {
+                        interpreted_node = interpret_node(node);
+                    } catch (const excptn::PurahError& e) {
+                        throw e;
+                    } catch (const excptn::MemoryError& e) {
+                        throw e;
+                    }
+                    if(interpreted_node->nodeType() == nds::ReturnExprType) {
+                        return std::move(interpreted_node);
+                    }
+                    if(interpreted_node->nodeType() == nds::BreakNodeType) {
+                        return std::move(interpreted_node);
+                    }
+                    if(interpreted_node->nodeType() == nds::ContinueNodeType) {
+                        return std::move(interpreted_node);
+                    }
                 }
                 return std::make_shared<nds::ASTNode>();
             }
@@ -198,6 +216,7 @@ namespace purah {
             nds::ASTPtr interpret_binary(nds::ASTPtr&);
             nds::ASTPtr interpret_new_var(nds::ASTPtr&);
             nds::ASTPtr interpret_if(nds::ASTPtr&);
+            nds::ASTPtr interpret_while(nds::ASTPtr&);
             nds::ASTPtr interpret_COUT(nds::ASTPtr&);
             std::vector<nds::ASTPtr> AST_vector{};
             mmry::VariableStorage    variable_storage;
@@ -246,6 +265,13 @@ nds::ASTPtr Purah::PurahSpace::interpret_node(nds::ASTPtr& node) {
         case nds::IfExprType:
             return_node = interpret_if(node);
             break;
+        case nds::WhileExprType:
+            return_node = interpret_while(node);
+            break;
+        case nds::BreakNodeType:
+        case nds::ContinueNodeType:
+            return_node = node;
+            break;
         case nds::COUTExprType:
             return_node = interpret_COUT(node);
             break;
@@ -266,7 +292,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_function_call(nds::ASTPtr& node) {
     if(!call_node->authorized) {
         std::vector<std::string> args{};
         for(nds::ASTPtr& arg : arguments) {
-            args.push_back(nds::type_token_to_string(arg->nodeType()));
+            args.push_back(nds::type_node_to_string(arg->nodeType()));
         }
         fnc::FunctionSignature sign = fnc::FunctionSignature{call_node->name,args};
         if(purah->functions.contains(sign)) {
@@ -286,7 +312,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_function_call(nds::ASTPtr& node) {
         purah->calling_stack.top().set_var(new_var_node);
     }
     nds::ASTPtr return_node = purah->calling_stack.top()();
-    if(nds::type_token_to_string(return_node->nodeType()) != func_sign.type)
+    if(nds::type_node_to_string(return_node->nodeType()) != func_sign.type)
         throw excptn::PurahError("Incorrect returning type for "+func_sign.to_string()+" signature");
     purah->calling_stack.pop();
     return std::move(return_node);
@@ -325,7 +351,7 @@ nds::ASTPtr Purah::PurahSpace::interpret_new_var(nds::ASTPtr& node) {
         throw excptn::PurahError("InterpreterError: Expected NewVar node at interpret_new_var");
     nds::NewVarNode* newvar_node = static_cast<nds::NewVarNode*>(node.get());
     std::string var_name         = newvar_node->name;
-    tkn::TokenType var_type      = string_to_token_type(newvar_node->type);
+    tkn::TokenType var_type      = nds::string_to_token_type(newvar_node->type);
     uint64_t address{};
     nds::ASTPtr value_node = interpret_node(newvar_node->value);
     switch(var_type) {
@@ -381,11 +407,40 @@ nds::ASTPtr Purah::PurahSpace::interpret_if(nds::ASTPtr& node) {
             if(return_node->nodeType() == nds::ReturnExprType) {
                 return std::move(return_node);
             }
+            if(return_node->nodeType() == nds::BreakNodeType) {
+                return std::move(return_node);
+            }
+            if(return_node->nodeType() == nds::ContinueNodeType) {
+                return std::move(return_node);
+            }
             break;
         }
         else {
             local_node = if_node->next_if;
         }
+    }
+    return std::make_shared<nds::ASTNode>();
+}
+nds::ASTPtr Purah::PurahSpace::interpret_while(nds::ASTPtr& node) {
+    if(node->nodeType() != nds::WhileExprType)
+        throw excptn::PurahError("InterpreterError: Expected WhileExpr node at interpret_while");
+    nds::WhileExprNode* while_node = static_cast<nds::WhileExprNode*>(node.get());
+    nds::ASTPtr condition          = std::move(interpret_node(while_node->condition));
+    if(condition->nodeType() != nds::BoolExprType)
+        throw excptn::PurahError("While-loop condition must be bool");
+    nds::BoolExprNode* cond_node = static_cast<nds::BoolExprNode*>(condition.get());
+    while(cond_node->value == true) {
+        purah->calling_stack.emplace(node,purah,this);
+        nds::ASTPtr return_node = purah->calling_stack.top().while_call();
+        purah->calling_stack.pop();
+        if(return_node->nodeType() == nds::ReturnExprType) {
+                return std::move(return_node);
+        }
+        if(return_node->nodeType() == nds::BreakNodeType) {
+            break;
+        }
+        condition = std::move(interpret_node(while_node->condition));
+        cond_node = static_cast<nds::BoolExprNode*>(condition.get());
     }
     return std::make_shared<nds::ASTNode>();
 }
@@ -425,6 +480,41 @@ nds::ASTPtr Purah::PurahSpace::interpret_binary(nds::ASTPtr& node) {
     if(node->nodeType() != nds::BinaryExprType)
         throw excptn::PurahError("InterpreterError: Expected BinaryExpr node at interpret_binary");
     nds::BinaryExprNode* bin_node = static_cast<nds::BinaryExprNode*>(node.get());
+    if (bin_node->op == tkn::EQUALS) {
+        if(bin_node->left->nodeType() != nds::IdentifierExprType)
+            throw excptn::PurahError("Left node of = operator must be IdentifierExpr");
+        nds::IdentifierExprNode* id_node = static_cast<nds::IdentifierExprNode*>(bin_node->left.get());
+        std::string var_name = id_node->name;
+        std::optional<mmry::MemoryCellPair*> optional_cell = get_var(var_name);
+        if(!optional_cell.has_value())
+            throw excptn::PurahError(std::string{"Undefined variable name: "}+var_name);
+        mmry::MemoryCellPair* cell = optional_cell.value();
+        nds::ASTPtr right_node = interpret_node(bin_node->right);
+        if(cell->first != nds::type_node_to_token(right_node->nodeType()))
+            throw excptn::PurahError("Type mismatch at = operator for variable: " + var_name);
+        switch(cell->first) {
+            case tkn::INTEGER: {
+                int64_t value = get_cpp_from_ast<int64_t>(right_node);
+                cell->second = value;
+            } break;
+            case tkn::FLOAT: {
+                double value = get_cpp_from_ast<double>(right_node);
+                cell->second = value;
+            } break;
+            case tkn::BOOL: {
+                bool value = get_cpp_from_ast<bool>(right_node);
+                cell->second = value;
+            } break;
+            case tkn::STRING: {
+                std::string value = get_cpp_from_ast<std::string>(right_node);
+                cell->second = value;
+            } break;
+            default:
+                throw excptn::PurahError("Unsupported variable type at = operator");
+                break;
+        }
+        return std::make_shared<nds::ASTNode>();
+    }
     nds::ASTPtr left  = interpret_node(bin_node->left);
     nds::ASTPtr right = interpret_node(bin_node->right);
     switch(bin_node->op) {

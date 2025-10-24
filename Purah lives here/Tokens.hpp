@@ -26,7 +26,8 @@ namespace purah { namespace tkn {
         LESS, LESS_OR_EQUALITY,                    /*   < <=                */
         DOT, COMMA, COLON, SEMICOLON,              /*   . , : ;             */
         VAR, CONST,                                /*   var const           */
-        WHILE, FOR,                                /*   while for           */  
+        WHILE, FOR,                                /*   while for           */
+        BREAK, CONTINUE,                           /*   break continue      */
         COUT, CLASS
     };
 

@@ -27,6 +27,8 @@ namespace purah { namespace nds {
         BinaryExprType,
         CallExprType, ReturnExprType,
         IfExprType,
+        WhileExprType,
+        BreakNodeType, ContinueNodeType,
         COUTExprType, PrintExprType
     };
 
@@ -142,9 +144,30 @@ namespace purah { namespace nds {
         ASTNodeType nodeType() override { return IfExprType; }
             IfExprNode(nds::ASTPtr _condition, std::vector<nds::ASTPtr>&& _body, nds::ASTPtr _n_i) 
                 : condition{std::move(_condition)}, body{std::move(_body)}, next_if{std::move(_n_i)} { }
-            nds::ASTPtr condition{};
+            nds::ASTPtr              condition{};
             std::vector<nds::ASTPtr> body{};
-            nds::ASTPtr next_if{};
+            nds::ASTPtr              next_if{};
+    };
+
+    class WhileExprNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return WhileExprType; }
+            WhileExprNode(nds::ASTPtr _condition, std::vector<nds::ASTPtr>&& _body) 
+                : condition{std::move(_condition)}, body{std::move(_body)} { }
+            nds::ASTPtr              condition{};
+            std::vector<nds::ASTPtr> body{};
+    };
+
+    class BreakNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return BreakNodeType; }
+            BreakNode() { }
+    };
+
+    class ContinueNode: public ASTNode {
+        public:
+        ASTNodeType nodeType() override { return ContinueNodeType; }
+            ContinueNode() { }
     };
 
     class COUTExprNode: public ASTNode {
@@ -161,12 +184,28 @@ namespace purah { namespace nds {
             std::vector<ASTPtr> out_args{};
     };
 
-    std::string type_token_to_string(const ASTNodeType type) {
-            if (type == IntExprType)    return "int";
-            if (type == FloatExprType)  return "float";
-            if (type == BoolExprType)   return "bool";
-            if (type == StringExprType) return "string";
-            throw std::invalid_argument("Unsupported node type for type_token_to_string");
-        }
+    static tkn::TokenType string_to_token_type(const std::string& type) {
+        if (type == "int")     return tkn::INTEGER;
+        if (type == "float")   return tkn::FLOAT;
+        if (type == "bool")    return tkn::BOOL;
+        if (type == "string")  return tkn::STRING;
+        throw std::invalid_argument("Unknown token type: " + type);
+    }
+
+    std::string type_node_to_string(const ASTNodeType type) {
+        if (type == IntExprType)    return "int";
+        if (type == FloatExprType)  return "float";
+        if (type == BoolExprType)   return "bool";
+        if (type == StringExprType) return "string";
+        throw std::invalid_argument("Unsupported node type for type_node_to_string");
+    }
+
+    tkn::TokenType type_node_to_token(const ASTNodeType type) {
+        if (type == IntExprType)    return tkn::INTEGER;
+        if (type == FloatExprType)  return tkn::FLOAT;
+        if (type == BoolExprType)   return tkn::BOOL;
+        if (type == StringExprType) return tkn::STRING;
+        throw std::invalid_argument("Unsupported node type for type_node_to_token");
+    }
 
 } }
