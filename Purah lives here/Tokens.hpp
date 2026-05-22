@@ -12,7 +12,7 @@ namespace purah { namespace tkn {
         EOF = -2, EOL = -1, EMPTY,
         IDENTIFIER,
         INTEGER, STRING, FLOAT, BOOL,
-        SLASH, DBL_SLASH,                          /*   / //                */  
+        SLASH, DBL_SLASH,                          /*   / //                */
         BACKSLASH, DBL_BACKSLASH,                  /*   \ \\                */
         PLUS, MINUS, EQUALS, L_BRACKET, R_BRACKET, /*   + - = ( )           */
         INCREMENT, DECREMENT,                      /*   ++ --               */
@@ -20,7 +20,7 @@ namespace purah { namespace tkn {
         IF, ELSE, FUNCTION, RETURN,                /*   if else func return */
         L_CRL_BRACKET, R_CRL_BRACKET, ARROW,       /*   { } ->              */
         L_SQR_BRACKET, R_SQR_BRACKET,              /*   [ ]                 */
-        NOT, AND, OR, TRUE, FALSE,                 /*   ! && || true false  */      
+        NOT, AND, OR, TRUE, FALSE,                 /*   ! && || true false  */
         EQUALITY, NO_EQUALITY,                     /*   == !=               */
         MORE, MORE_OR_EQUALITY,                    /*   > >=                */
         LESS, LESS_OR_EQUALITY,                    /*   < <=                */
@@ -32,15 +32,15 @@ namespace purah { namespace tkn {
     };
 
     struct Token {
-        Token(TokenType _t, std::string _v, size_t _l = 0ull) : 
+        Token(TokenType _t, std::string _v, size_t _l = 0ull) :
             type{_t}, value{_v}, line{_l} {}
-        TokenType type{};
+        TokenType   type{};
         std::string value{};
-        size_t line{};
+        size_t      line{};
     };
 
-    std::set<TokenType> binary_operators { 
-        PLUS, MINUS, EQUALS, 
+    std::set<TokenType> binary_operators {
+        PLUS, MINUS, EQUALS,
         STAR, SLASH, DBL_SLASH, PERCENT,
         AND, OR, EQUALITY, NO_EQUALITY,
         MORE, MORE_OR_EQUALITY, LESS, LESS_OR_EQUALITY
@@ -50,7 +50,7 @@ namespace purah { namespace tkn {
         return (binary_operators.find(token_type) != binary_operators.end());
     }
 
-    std::set<TokenType> single_value_types { 
+    std::set<TokenType> single_value_types {
         INTEGER, STRING, FLOAT, BOOL
     };
 

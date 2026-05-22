@@ -20,7 +20,7 @@ namespace purah { namespace prsr {
     public:
         Parser(std::vector<tkn::Token>& _tokens) : tokens{_tokens} {
             token_iter = tokens.cbegin();
-            token_end = tokens.cend();
+            token_end  = tokens.cend();
         }
         void operator()() {
             while (available()) {
@@ -142,7 +142,7 @@ namespace purah { namespace prsr {
                 unsigned int op_priority = token_priority.at(op);
                 go_next_token();
                 nds::ASTPtr right = parse_expression_statement(op_priority);
-                nds::ASTPtr node = std::make_shared<nds::BinaryExprNode>(op, std::move(left), std::move(right));
+                nds::ASTPtr node  = std::make_shared<nds::BinaryExprNode>(op, std::move(left), std::move(right));
                 return std::move(node);
             }
             return std::move(left);

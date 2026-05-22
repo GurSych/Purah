@@ -72,7 +72,7 @@ namespace purah { namespace lxr {
                             else if(*iter == 'b')  str += '\b';
                             else if(*iter == 'f')  str += '\f';
                             else if(*iter == 'v')  str += '\v';
-                            else 
+                            else
                                 throw excptn::LexerError("Unknown special character '" + std::string{*iter} + "' at line " + std::to_string(line));
                             special_char = false; ++iter;
                             continue;
@@ -83,7 +83,7 @@ namespace purah { namespace lxr {
                         }
                         str += *iter++;
                     }
-                    if(iter >= end) 
+                    if(iter >= end)
                         throw excptn::LexerError("Unclosed string at line " + std::to_string(line));
                     tokens.emplace_back(tkn::STRING,str,line);
                 }
@@ -167,12 +167,12 @@ namespace purah { namespace lxr {
             current_line = 1ull;
         }
         static const inline std::map<std::string,tkn::TokenType> system_words{
-            {"var",tkn::VAR},{"const",tkn::CONST},
-            {"func",tkn::FUNCTION},{"return",tkn::RETURN},
-            {"if",tkn::IF},{"else",tkn::ELSE},
-            {"not",tkn::NOT},{"and",tkn::AND},{"or",tkn::OR},
-            {"while",tkn::WHILE},{"for",tkn::FOR},
-            {"break",tkn::BREAK},{"continue",tkn::CONTINUE},
+            {"var",tkn::VAR}, {"const",tkn::CONST},
+            {"func",tkn::FUNCTION}, {"return",tkn::RETURN},
+            {"if",tkn::IF}, {"else",tkn::ELSE},
+            {"not",tkn::NOT}, {"and",tkn::AND}, {"or",tkn::OR},
+            {"while",tkn::WHILE}, {"for",tkn::FOR},
+            {"break",tkn::BREAK}, {"continue",tkn::CONTINUE},
             {"COUT",tkn::COUT}
         };
     private:
