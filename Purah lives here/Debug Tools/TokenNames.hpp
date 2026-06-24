@@ -24,7 +24,7 @@
 
 using namespace purah;
 
-namespace purah { namespace debug {
+namespace purah::debug {
 
     inline std::map<tkn::TokenType, std::string> tokenNames = {
         { tkn::TokenType::EOF,              "EOF"              },
@@ -88,6 +88,6 @@ namespace purah { namespace debug {
         return "UNNAMED";
     }
 
-} }
+}
 
 #endif // PURAH_DEBUG_TOOLS_TOKEN_NAMES_HPP

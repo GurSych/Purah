@@ -24,9 +24,9 @@
     #undef EOF
 #endif
 
-namespace purah { namespace tkn {
+namespace purah::tkn {
 
-    using __TOKEN_FILE_t__   = uint32_t;
+    using __TOKEN_FILE_t__   =  int32_t;
     using __TOKEN_LINE_t__   = uint64_t;
     using __TOKEN_COLUMN_t__ = uint64_t;
 
@@ -57,8 +57,12 @@ namespace purah { namespace tkn {
 
     class Token {
     public:
-        Token(TokenType type, std::string value, __TOKEN_FILE_t__ file, __TOKEN_LINE_t__ line, __TOKEN_COLUMN_t__ column)
-            : type_{type}, value_{value}, file_{file}, line_{line}, column_{column} {}
+        Token(TokenType          type,
+              std::string        value,
+              __TOKEN_FILE_t__   file,
+              __TOKEN_LINE_t__   line,
+              __TOKEN_COLUMN_t__ column
+        ) : type_{type}, value_{value}, file_{file}, line_{line}, column_{column} {}
 
         TokenType          type()   const { return type_;   }
         const std::string& value()  const { return value_;  }
@@ -74,6 +78,6 @@ namespace purah { namespace tkn {
         __TOKEN_COLUMN_t__ column_{};
     };
 
-} }
+}
 
 #endif // PURAH_LEXER_TOKENS_HPP
