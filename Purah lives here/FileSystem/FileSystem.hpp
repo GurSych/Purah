@@ -21,6 +21,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "../Lexer/Tokens.hpp"
 #include "../Exceptions/Exceptions.hpp"
@@ -48,6 +49,7 @@ namespace purah::fsys {
 
         auto  path()    const { return path_; }
         auto& stream()  const { return stream_; }
+        auto  content() const { return content_; }
 
         auto  file_id()       const { return file_id_; }
         auto  imported_from() const { return imported_from_; }
@@ -62,10 +64,25 @@ namespace purah::fsys {
             return stream_.is_open();
         }
 
+        void read() {
+            if (is_read_) return;
+            std::ifstream stream{path_};
+            if (!stream.is_open())
+                throw exptn::InternalInterpreterError{"Failed to open file", "File with path: " + path_.string() + " could not be opened"};
+            content_ = std::string{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
+            if (!stream.eof() && stream.fail())
+                throw exptn::InternalInterpreterError{"Failed to read file", "File with path: " + path_.string() + " could not be read"};
+            is_read_ = true;
+        }
+        bool is_read() const {
+            return is_read_;
+        }
 
     private:
         std::filesystem::path path_{};
         std::ifstream stream_{};
+        std::string content_{};
+        bool is_read_{false};
         const tkn::__TOKEN_FILE_t__ file_id_{-1};
         const tkn::__TOKEN_FILE_t__ imported_from_{-1};
     };
@@ -75,22 +92,22 @@ namespace purah::fsys {
         FileSystem() = default;
 
         tkn::__TOKEN_FILE_t__ add(const std::string& path) {
-            files_.emplace_back(path, file_counter_);
+            files_.emplace_back(std::make_unique<File>(path, file_counter_));
             return file_counter_++;
         }
 
         File& get_file(tkn::__TOKEN_FILE_t__ file_id) {
-            if(file_id < files_.size()) return files_[file_id];
-            throw exptn::InternalInterpreterError(
+            if(file_id < files_.size()) return *files_[file_id];
+            throw exptn::InternalInterpreterError{
                 "Invalid file id",
                 "FileSystem is asked for file id: " + std::to_string(file_id)
                     + ", but only " + std::to_string(files_.size()) + " files are available"
-            );
+            };
         }
 
     private:
-        static inline tkn::__TOKEN_FILE_t__ file_counter_{0};
-        std::vector<File> files_{};
+        tkn::__TOKEN_FILE_t__ file_counter_{0};
+        std::vector<std::unique_ptr<File>> files_{};
     };
 
 }

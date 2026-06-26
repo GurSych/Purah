@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <string_view>
 #include <string>
 #include <vector>
 #include <cctype>
@@ -29,7 +30,10 @@ namespace purah::lxr {
 
     class Lexer {
     public:
-        Lexer() = default;
+        Lexer(std::string_view content) : content_(content) {}
+
+    private:
+        std::string_view content_;
 
     };
 

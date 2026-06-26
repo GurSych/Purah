@@ -46,7 +46,7 @@ namespace purah::exptn {
 
         void make_out() {
             out.clear();
-            if (!name_.empty()) out += name_ + ": ";
+            if (!name_.empty()) out += "||" + name_ + ": ";
             out += title_ + "\n" + message_;
         }
 
