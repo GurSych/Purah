@@ -68,10 +68,10 @@ namespace purah::fsys {
             if (is_read_) return;
             std::ifstream stream{path_};
             if (!stream.is_open())
-                throw exptn::InternalInterpreterError{"Failed to open file", "File with path: " + path_.string() + " could not be opened"};
+                throw error::InternalInterpreterError{"Failed to open file", "File with path: " + path_.string() + " could not be opened"};
             content_ = std::string{std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
             if (!stream.eof() && stream.fail())
-                throw exptn::InternalInterpreterError{"Failed to read file", "File with path: " + path_.string() + " could not be read"};
+                throw error::InternalInterpreterError{"Failed to read file", "File with path: " + path_.string() + " could not be read"};
             is_read_ = true;
         }
         bool is_read() const {
@@ -98,7 +98,7 @@ namespace purah::fsys {
 
         File& get_file(tkn::__TOKEN_FILE_t__ file_id) {
             if(file_id < files_.size()) return *files_[file_id];
-            throw exptn::InternalInterpreterError{
+            throw error::InternalInterpreterError{
                 "Invalid file id",
                 "FileSystem is asked for file id: " + std::to_string(file_id)
                     + ", but only " + std::to_string(files_.size()) + " files are available"

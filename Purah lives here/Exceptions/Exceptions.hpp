@@ -20,7 +20,7 @@
 #include <string>
 #include <exception>
 
-namespace purah::exptn {
+namespace purah::error {
 
     class Exception : public std::exception {
     public:
