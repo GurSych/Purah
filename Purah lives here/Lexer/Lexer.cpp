@@ -13,3 +13,14 @@
 // limitations under the License.
 
 #include "Lexer.hpp"
+
+using namespace purah;
+
+lxr::Lexer::Lexer(fsys::File& file) {
+    if (!file.is_open()) file.read();
+    content_ = file.content();
+    file_    = file.file_id();
+}
+
+lxr::Lexer::Lexer(std::string_view content, tkn::__TOKEN_FILE_t__ file)
+    : content_{content}, file_{file} {}

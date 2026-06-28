@@ -23,6 +23,7 @@
 #include <cctype>
 
 #include "../FileSystem/FileSystem.hpp"
+#include "Tokens.hpp"
 
 using namespace purah;
 
@@ -30,11 +31,15 @@ namespace purah::lxr {
 
     class Lexer {
     public:
-        Lexer(std::string_view content) : content_(content) {}
+        Lexer(fsys::File& file);
+        Lexer(std::string_view content, tkn::__TOKEN_FILE_t__ file = -1);
 
     private:
         std::string_view content_;
-
+        tkn::__TOKEN_FILE_t__ file_{-1};
+        std::size_t pos_{};
+        std::size_t line_{};
+        std::size_t row_{};
     };
 
 }

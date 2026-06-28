@@ -60,10 +60,18 @@ namespace purah::exptn {
     class InternalInterpreterError : public Exception {
     public:
         InternalInterpreterError(const std::string& message)
-            : Exception("InternalInterpreterError", "", message) {}
+            : Exception("Internal Interpreter Error", "", message) {}
         InternalInterpreterError(const std::string& title, const std::string& message)
-            : Exception("InternalInterpreterError", title, message) {}
+            : Exception("Internal Interpreter Error", title, message) {}
 
+    };
+
+    class LexerError : public Exception {
+    public:
+        LexerError(const std::string& message)
+            : Exception("Lexer Error", "", message) {}
+        LexerError(const std::string& title, const std::string& message)
+            : Exception("Lexer Error", title, message) {}
     };
 
 }

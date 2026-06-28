@@ -29,6 +29,7 @@ namespace purah::tkn {
     using __TOKEN_FILE_t__   =  int32_t;
     using __TOKEN_LINE_t__   = uint64_t;
     using __TOKEN_COLUMN_t__ = uint64_t;
+    using __TOKEN_LENGTH_t__ = uint32_t;
 
     enum class TokenType {
         EOF = -1, EMPTY,                           /*   EOF EMPTY                   */
@@ -61,14 +62,16 @@ namespace purah::tkn {
               std::string        value,
               __TOKEN_FILE_t__   file,
               __TOKEN_LINE_t__   line,
-              __TOKEN_COLUMN_t__ column
-        ) : type_{type}, value_{value}, file_{file}, line_{line}, column_{column} {}
+              __TOKEN_COLUMN_t__ column,
+              __TOKEN_LENGTH_t__ length
+        ) : type_{type}, value_{value}, file_{file}, line_{line}, column_{column}, length_{length} {}
 
         TokenType          type()   const { return type_;   }
         const std::string& value()  const { return value_;  }
         __TOKEN_FILE_t__   file()   const { return file_;   }
         __TOKEN_LINE_t__   line()   const { return line_;   }
         __TOKEN_COLUMN_t__ column() const { return column_; }
+        __TOKEN_LENGTH_t__ length() const { return length_; }
 
     private:
         TokenType   type_{};
@@ -76,6 +79,7 @@ namespace purah::tkn {
         __TOKEN_FILE_t__   file_{};
         __TOKEN_LINE_t__   line_{};
         __TOKEN_COLUMN_t__ column_{};
+        __TOKEN_LENGTH_t__ length_{};
     };
 
 }
