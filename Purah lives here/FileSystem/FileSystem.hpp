@@ -78,6 +78,24 @@ namespace purah::fsys {
             return is_read_;
         }
 
+        std::string extract_content(std::size_t pos, std::size_t length) const {
+            if (!is_read_)
+                throw error::InternalInterpreterError{
+                    "Failed to extract file content",
+                    "File with path: " + path_.string() + " has not been read and cannot have substr values"
+                };
+            try {
+                return content_.substr(pos, length);
+            } catch (const std::out_of_range& std_exeption) {
+                throw error::InternalInterpreterError{
+                    "Failed to extract file content",
+                    "File with path: " + path_.string() + " has not enough content to extract "
+                        + std::to_string(length) + " bytes starting from " + std::to_string(pos) + " position",
+                    std::make_exception_ptr(std_exeption)
+                };
+            }
+        }
+
     private:
         std::filesystem::path path_{};
         std::ifstream stream_{};

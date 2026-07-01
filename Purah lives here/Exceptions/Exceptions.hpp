@@ -35,26 +35,44 @@ namespace purah::error {
             : name_{name}, title_{title}, message_{message} {
             make_out();
         }
-
-        const char* what() const noexcept override {
-            return out.c_str();
+        Exception(const std::string& name, const std::string& title, const std::string& message, std::exception_ptr cause_exception)
+            : name_{name}, title_{title}, message_{message}, cause_exception_{cause_exception} {
+            make_out();
         }
 
-        const std::string name()    const noexcept { return title_; }
-        const std::string title()   const noexcept { return title_; }
-        const std::string message() const noexcept { return message_; }
+
+        const char* what() const noexcept override {
+            return out_.c_str();
+        }
+
+        std::string name()    const noexcept { return name_; }
+        std::string title()   const noexcept { return title_; }
+        std::string message() const noexcept { return message_; }
+
+        std::string out() const noexcept { return out_; }
+
+        std::exception_ptr cause_exception() const noexcept { return cause_exception_; }
 
         void make_out() {
-            out.clear();
-            if (!name_.empty()) out += "||" + name_ + ": ";
-            out += title_ + "\n" + message_;
+            out_.clear();
+            if (!name_.empty()) out_ += "||" + name_ + ": ";
+            out_ += title_ + "\n" + message_;
+            if (cause_exception_) {
+                out_ += "\n";
+                try {
+                    std::rethrow_exception(cause_exception_);
+                } catch (const std::exception& e) {
+                    out_ += e.what();
+                }
+            }
         }
 
     private:
+        const std::string name_{};
         std::string title_{};
         std::string message_{};
-        const std::string name_{};
-        std::string out{};
+        std::string out_{};
+        std::exception_ptr cause_exception_{};
     };
 
     class InternalInterpreterError : public Exception {
@@ -63,6 +81,8 @@ namespace purah::error {
             : Exception("Internal Interpreter Error", "", message) {}
         InternalInterpreterError(const std::string& title, const std::string& message)
             : Exception("Internal Interpreter Error", title, message) {}
+        InternalInterpreterError(const std::string& title, const std::string& message, std::exception_ptr cause_exception)
+            : Exception("Internal Interpreter Error", title, message, cause_exception) {}
 
     };
 
@@ -72,6 +92,9 @@ namespace purah::error {
             : Exception("Lexer Error", "", message) {}
         LexerError(const std::string& title, const std::string& message)
             : Exception("Lexer Error", title, message) {}
+        LexerError(const std::string& title, const std::string& message, std::exception_ptr cause_exception)
+            : Exception("Lexer Error", title, message, cause_exception) {}
+
     };
 
 }
