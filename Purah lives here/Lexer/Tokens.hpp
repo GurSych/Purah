@@ -57,30 +57,32 @@ namespace purah::tkn {
         CLASS                                      /*   class                       */
     };
 
+    struct TokenPosition {
+        __TOKEN_FILE_t__   file;
+        __TOKEN_LINE_t__   line;
+        __TOKEN_COLUMN_t__ column;
+    };
+
     class Token {
     public:
-        Token(TokenType          type,
-              std::string        value,
-              __TOKEN_FILE_t__   file,
-              __TOKEN_LINE_t__   line,
-              __TOKEN_COLUMN_t__ column,
-              __TOKEN_LENGTH_t__ length
-        ) : type_{type}, value_{value}, file_{file}, line_{line}, column_{column}, length_{length} {}
+        Token(TokenType type, std::string value, TokenPosition position)
+            : type_{type}, value_{value}, position_{position} {}
 
-        TokenType          type()   const { return type_;   }
-        const std::string& value()  const { return value_;  }
-        __TOKEN_FILE_t__   file()   const { return file_;   }
-        __TOKEN_LINE_t__   line()   const { return line_;   }
-        __TOKEN_COLUMN_t__ column() const { return column_; }
-        __TOKEN_LENGTH_t__ length() const { return length_; }
+        TokenType          type()   const { return type_; }
+        const std::string& value()  const { return value_; }
+
+        TokenPosition position() const { return position_; }
+
+        __TOKEN_FILE_t__   file()   const { return position_.file; }
+        __TOKEN_LINE_t__   line()   const { return position_.line; }
+        __TOKEN_COLUMN_t__ column() const { return position_.column; }
+
+        __TOKEN_LENGTH_t__ length() const { return value_.size(); }
 
     private:
         TokenType   type_{};
         std::string value_{};
-        __TOKEN_FILE_t__   file_{};
-        __TOKEN_LINE_t__   line_{};
-        __TOKEN_COLUMN_t__ column_{};
-        __TOKEN_LENGTH_t__ length_{};
+        TokenPosition position_{};
     };
 
     using vector = std::vector<Token>;

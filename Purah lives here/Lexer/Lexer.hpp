@@ -33,6 +33,20 @@ namespace purah::lxr {
         Lexer(std::string_view content, purah::tkn::__TOKEN_FILE_t__ file = -1);
 
     private:
+        bool is_end() const;
+
+        char advance();
+
+        char peek() const;
+        char peek_next() const;
+
+        //char get_number() const;
+        //char get_identifier() const;
+
+        bool is_space(char chr) const;
+        bool is_digit(char chr) const;
+        bool is_alpha(char chr) const;
+
         std::string_view content_;
         purah::tkn::__TOKEN_FILE_t__ file_{-1};
         std::size_t pos_{};

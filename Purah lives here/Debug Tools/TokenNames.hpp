@@ -86,6 +86,22 @@ namespace purah::debug {
         return "UNNAMED";
     }
 
+    inline std::string getTokenInfo(purah::tkn::Token& token) {
+        std::string out{"{ \""};
+        out += token.value();
+        out += "\"";
+        out += ", type: ";
+        out += getTokenName(token.type());
+        out += ", position: {";
+        out += std::to_string(token.file());
+        out += ", ";
+        out += std::to_string(token.line());
+        out += ", ";
+        out += std::to_string(token.column());
+        out += "} }";
+        return out;
+    }
+
 }
 
 #endif // PURAH_DEBUG_TOOLS_TOKEN_NAMES_HPP
