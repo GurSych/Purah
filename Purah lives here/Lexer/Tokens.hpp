@@ -18,6 +18,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <cstdint>
 
 #if defined(EOF)
@@ -81,6 +82,8 @@ namespace purah::tkn {
         __TOKEN_COLUMN_t__ column_{};
         __TOKEN_LENGTH_t__ length_{};
     };
+
+    using vector = std::vector<Token>;
 
 }
 
