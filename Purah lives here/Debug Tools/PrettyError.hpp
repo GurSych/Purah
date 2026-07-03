@@ -22,14 +22,12 @@
 
 #include "../Exceptions/Exceptions.hpp"
 
-using namespace purah;
-
 namespace purah::debug {
 
     class PrettyError {
     public:
         PrettyError(std::exception_ptr e) : e_{e} {}
-        PrettyError(error::Exception& e) : e_{std::make_exception_ptr(e)} {}
+        PrettyError(purah::error::Exception& e) : e_{std::make_exception_ptr(e)} {}
         PrettyError(std::exception& e) : e_{std::make_exception_ptr(e)} {}
 
         std::string message(bool colorized = true, bool ascii_only = false) {

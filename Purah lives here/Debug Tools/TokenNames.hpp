@@ -22,11 +22,9 @@
 
 #include "../Lexer/Tokens.hpp"
 
-using namespace purah;
-
 namespace purah::debug {
 
-    inline std::map<tkn::TokenType, std::string> tokenNames = {
+    inline std::map<purah::tkn::TokenType, std::string> tokenNames = {
         { tkn::TokenType::EOF,              "EOF"              },
         { tkn::TokenType::EMPTY,            "EMPTY"            },
         { tkn::TokenType::IDENTIFIER,       "IDENTIFIER"       },
@@ -81,7 +79,7 @@ namespace purah::debug {
         { tkn::TokenType::CLASS,            "CLASS"            }
     };
 
-    inline std::string getTokenName(tkn::TokenType type) {
+    inline std::string getTokenName(purah::tkn::TokenType type) {
         if (tokenNames.contains(type)) {
             return tokenNames[type];
         }
