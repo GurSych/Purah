@@ -7,7 +7,7 @@ Purah is my high-level dynamically typed interpreted programming language
 > Language is in development so this section is used as a to-do list
 
 - [X] Tokens
-- [ ] File system
+- [X] File system
 - [ ] Lexer
 - [ ] Parser
   - [ ] Identifier parsing

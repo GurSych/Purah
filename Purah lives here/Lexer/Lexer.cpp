@@ -15,6 +15,7 @@
 #include <cctype>
 
 #include "Lexer.hpp"
+#include "Tokens.hpp"
 
 using namespace purah;
 
@@ -29,6 +30,10 @@ lxr::Lexer::Lexer(std::string_view content, purah::tkn::__TOKEN_FILE_t__ file)
 
 bool lxr::Lexer::is_end() const {
     return pos_ >= content_.size();
+}
+
+tkn::TokenPosition lxr::Lexer::get_position() const {
+    return {file_, line_, row_, pos_};
 }
 
 char lxr::Lexer::advance() {
@@ -50,13 +55,45 @@ char lxr::Lexer::peek_next() const {
     if (pos_ + 1 >= content_.size()) return '\0';
     return content_[pos_ + 1];
 }
+bool lxr::Lexer::peek_match(char chr) const {
+    return peek() == chr;
+}
 
-bool lxr::Lexer::is_space(char chr) const {
+void lxr::Lexer::skip_whitespace() {
+    while (!is_end() && is_space(peek())) advance();
+}
+
+tkn::Token lxr::Lexer::get_identifier() {
+    tkn::TokenPosition position = get_position();
+    std::string value{};
+    while (!is_end() && is_alpha(peek())) value += advance();
+    return {tkn::TokenType::IDENTIFIER, value, position};
+}
+tkn::Token lxr::Lexer::get_number() {
+    tkn::TokenPosition position = get_position();
+    std::string value{};
+    while (!is_end() && is_digit(peek())) value += advance();
+    if (!peek_match('.'))
+        return {tkn::TokenType::INTEGER, value, position};
+    value += advance();
+    while (!is_end() && is_digit(peek())) value += advance();
+    return {tkn::TokenType::FLOAT, value, position};
+}
+tkn::Token lxr::Lexer::get_string() {
+    tkn::TokenPosition position = get_position();
+    std::string value{};
+    advance();
+    while (!is_end() && !peek_match('"')) value += advance();
+    advance();
+    return {tkn::TokenType::STRING, value, position};
+}
+
+bool lxr::Lexer::is_space(char chr) {
     return std::isspace(static_cast<unsigned char>(chr));
 }
-bool lxr::Lexer::is_digit(char chr) const {
+bool lxr::Lexer::is_digit(char chr) {
     return std::isdigit(static_cast<unsigned char>(chr));
 }
-bool lxr::Lexer::is_alpha(char chr) const {
+bool lxr::Lexer::is_alpha(char chr) {
     return std::isalpha(static_cast<unsigned char>(chr));
 }

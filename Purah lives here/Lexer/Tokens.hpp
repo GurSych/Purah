@@ -27,10 +27,11 @@
 
 namespace purah::tkn {
 
-    using __TOKEN_FILE_t__   =  int32_t;
-    using __TOKEN_LINE_t__   = uint64_t;
-    using __TOKEN_COLUMN_t__ = uint64_t;
-    using __TOKEN_LENGTH_t__ = uint32_t;
+    using __TOKEN_FILE_t__ =  int32_t;
+    using __TOKEN_LINE_t__     = uint64_t;
+    using __TOKEN_COLUMN_t__   = uint64_t;
+    using __TOKEN_POSITION_t__ = uint64_t;
+    using __TOKEN_LENGTH_t__ = uint64_t;
 
     enum class TokenType {
         EOF = -1, EMPTY,                           /*   EOF EMPTY                   */
@@ -58,9 +59,10 @@ namespace purah::tkn {
     };
 
     struct TokenPosition {
-        __TOKEN_FILE_t__   file;
-        __TOKEN_LINE_t__   line;
-        __TOKEN_COLUMN_t__ column;
+        __TOKEN_FILE_t__     file;
+        __TOKEN_LINE_t__     line;
+        __TOKEN_COLUMN_t__   column;
+        __TOKEN_POSITION_t__ pos;
     };
 
     class Token {
@@ -73,15 +75,17 @@ namespace purah::tkn {
 
         TokenPosition position() const { return position_; }
 
-        __TOKEN_FILE_t__   file()   const { return position_.file; }
-        __TOKEN_LINE_t__   line()   const { return position_.line; }
-        __TOKEN_COLUMN_t__ column() const { return position_.column; }
+        __TOKEN_FILE_t__     file()   const { return position_.file; }
+        __TOKEN_LINE_t__     line()   const { return position_.line; }
+        __TOKEN_COLUMN_t__   column() const { return position_.column; }
+        __TOKEN_POSITION_t__ pos()    const { return position_.pos; }
+
 
         __TOKEN_LENGTH_t__ length() const { return value_.size(); }
 
     private:
-        TokenType   type_{};
-        std::string value_{};
+        TokenType     type_{};
+        std::string   value_{};
         TokenPosition position_{};
     };
 

@@ -15,6 +15,7 @@
 #ifndef PURAH_LEXER_LEXER_HPP
 #define PURAH_LEXER_LEXER_HPP
 
+#include <cstddef>
 #pragma once
 
 #include <string_view>
@@ -35,20 +36,27 @@ namespace purah::lxr {
     private:
         bool is_end() const;
 
+        tkn::TokenPosition get_position() const;
+
         char advance();
 
         char peek() const;
         char peek_next() const;
+        bool peek_match(char chr) const;
 
-        //char get_number() const;
-        //char get_identifier() const;
+        void skip_whitespace();
 
-        bool is_space(char chr) const;
-        bool is_digit(char chr) const;
-        bool is_alpha(char chr) const;
+        tkn::Token get_identifier();
+        tkn::Token get_number();
+        tkn::Token get_string();
 
-        std::string_view content_;
+        static bool is_space(char chr);
+        static bool is_digit(char chr);
+        static bool is_alpha(char chr);
+
+        std::string_view content_{};
         purah::tkn::__TOKEN_FILE_t__ file_{-1};
+
         std::size_t pos_{};
         std::size_t line_{};
         std::size_t row_{};

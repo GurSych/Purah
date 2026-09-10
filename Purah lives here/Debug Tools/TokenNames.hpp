@@ -89,8 +89,7 @@ namespace purah::debug {
     inline std::string getTokenInfo(purah::tkn::Token& token) {
         std::string out{"{ \""};
         out += token.value();
-        out += "\"";
-        out += ", type: ";
+        out += "\", type: ";
         out += getTokenName(token.type());
         out += ", position: {";
         out += std::to_string(token.file());
